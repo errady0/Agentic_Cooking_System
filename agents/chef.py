@@ -17,7 +17,7 @@ from langchain_core.messages import AIMessage, SystemMessage, HumanMessage
 
 from agents.state import KitchenState
 from agents.llm import get_llm
-from tools import web_search, web_scrape
+from tools import web_search, web_scrape, get_ingredient_prices
 
 _llm = get_llm(temperature=0.4)
 
@@ -104,9 +104,26 @@ def chef_agent(state: KitchenState) -> KitchenState:
             "pairing": "Moroccan mint tea",
         }
 
+    # ── Price lookup ──────────────────────────────────────────────────
+    # Extract ingredient names from the recipe and fetch Moroccan market prices.
+    prices = None
+    try:
+        ingredient_names = [
+            ing.get("item", ing.get("name", ""))
+            for ing in recipe.get("ingredients", [])
+            if isinstance(ing, dict)
+        ]
+        if ingredient_names:
+            raw_prices = get_ingredient_prices.invoke({"ingredients": ingredient_names})
+            prices = json.loads(raw_prices)
+    except Exception:
+        prices = None  # pricing is best-effort, never blocks the recipe
+
+
     return {
         **state,
         "current_recipe": recipe,
+        "ingredient_prices": prices,
         "next_agent": "nutrition",
         "messages": [
             AIMessage(content=f"[Chef] Recipe ready: {recipe.get('name', dish)}")

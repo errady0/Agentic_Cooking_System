@@ -53,7 +53,7 @@ def print_result(result, debug: bool = False):
     console.print()
     console.print(Panel(
         Markdown(result.final_response),
-        title="[bold green]🍋 Moroccan Kitchen[/bold green]",
+        title="[bold green]🍋 Welcome to CMA [/bold green]",
         border_style="green",
         padding=(1, 2),
     ))
@@ -73,7 +73,7 @@ def print_result(result, debug: bool = False):
             source = result.nutrition.get("data_source", "")
             med_score = result.nutrition.get("mediterranean_score", "")
             table = Table(
-                title=f"Nutrition per serving  [dim](source: {source})[/dim]",
+                title="Nutrition per serving: ",
                 box=box.SIMPLE,
                 show_header=True,
                 header_style="bold cyan",
@@ -82,6 +82,7 @@ def print_result(result, debug: bool = False):
             table.add_column("Carbs")
             table.add_column("Protein")
             table.add_column("Fat")
+            table.add_column("Sugar")
             table.add_column("Fibre")
             table.add_column("Med. score")
             table.add_row(
@@ -89,6 +90,7 @@ def print_result(result, debug: bool = False):
                 f"{n.get('carbs_g', '?')} g",
                 f"{n.get('protein_g', '?')} g",
                 f"{n.get('fat_g', '?')} g",
+                f"{n.get('sugar_g', '?')} g",
                 f"{n.get('fibre_g', '?')} g",
                 f"{med_score}/10" if med_score else "—",
             )
@@ -169,8 +171,7 @@ def run_interactive(user_id: str, debug: bool):
         console.print()
 
     with KitchenOrchestrator(user_id=user_id) as orchestrator:
-        console.print("[dim]Session started...[/dim]")
-        console.print(f"[dim]Welcome back [bold]{user_id}[/bold]![/dim]")
+        console.print(f"[dim]Session started: [bold]{user_id}[/bold][/dim]")
 
         while True:
             try:
@@ -206,7 +207,7 @@ def run_interactive(user_id: str, debug: bool):
 
 def main():
     parser = argparse.ArgumentParser(description="Moroccan Kitchen AI — Terminal App")
-    parser.add_argument("--user-id", default="guest", help="User identifier")
+    parser.add_argument("--user-id", default="errady", help="User identifier")
     parser.add_argument("--debug", action="store_true", help="Show verbose agent traces")
     args = parser.parse_args()
 

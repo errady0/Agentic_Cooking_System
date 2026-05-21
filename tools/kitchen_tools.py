@@ -107,32 +107,24 @@ def web_scrape(url: str) -> str:
         return f"Scraping failed: {e}"
 
 
-# ── 3. Nutrition API ─────────────────────────────────────────────────
+# ── 3. Nutrition ─────────────────────────────────────────────────
 
 @tool
 def nutrition_lookup(dish_name: str, servings: int = 4) -> str:
     """
     Look up nutritional information for a Moroccan dish.
-    Returns calories, carbohydrates, protein, fat, and fibre per serving.
-    Uses LLM-estimated response, or your based knowledge.
+    Returns calories, carbohydrates, protein, fat, sugar and fibre per serving.
+    Uses LLM-estimated response.
     """
     return _llm_estimated_nutrition(dish_name, servings)
 
-
+from memory import nutritions_tab
 def _llm_estimated_nutrition(dish_name: str, servings: int) -> str:
     """
     Fallback: return a realistic but approximate estimate using known values
     for common Moroccan dishes.
     """
-    known: dict[str, dict] = {
-        "tajine": {"calories": 420, "carbs_g": 22, "protein_g": 31, "fat_g": 18, "fibre_g": 5},
-        "couscous": {"calories": 380, "carbs_g": 58, "protein_g": 14, "fat_g": 9, "fibre_g": 6},
-        "harira": {"calories": 210, "carbs_g": 28, "protein_g": 11, "fat_g": 5, "fibre_g": 7},
-        "bastilla": {"calories": 510, "carbs_g": 42, "protein_g": 26, "fat_g": 22, "fibre_g": 2},
-        "msemen": {"calories": 290, "carbs_g": 44, "protein_g": 7, "fat_g": 9, "fibre_g": 1},
-        "chebakia": {"calories": 240, "carbs_g": 31, "protein_g": 3, "fat_g": 12, "fibre_g": 1},
-        "rfissa": {"calories": 470, "carbs_g": 48, "protein_g": 28, "fat_g": 16, "fibre_g": 5},
-    }
+    known: dict[str, dict] = nutritions_tab
     key = next((k for k in known if k in dish_name.lower()), None)
     values = known.get(key, {})
     result = {
@@ -143,5 +135,117 @@ def _llm_estimated_nutrition(dish_name: str, servings: int) -> str:
     return json.dumps(result, ensure_ascii=False)
 
 
+# ── 4. Ingredients Price ─────────────────────────────────────────────────
+
+from memory import ingredients_price
+_PRICE_TABLE_MAD: dict[str, dict] = ingredients_price
+
+def _search_price(ingredient: str) -> Optional[dict]:
+    """
+    Try to get a live Moroccan price via Tavily web search.
+    Returns {price_mad, unit, source} or None if search unavailable/failed.
+    """
+    if not settings.TAVILY_API_KEY:
+        return None
+    try:
+        from tavily import TavilyClient
+        client = TavilyClient(api_key=settings.TAVILY_API_KEY)
+        query = f"prix {ingredient} maroc marché 2026 dirham kg"
+        response = client.search(query=query, max_results=3, search_depth="basic")
+
+        # Try to extract a price from the answer or first result
+        text = response.get("answer", "")
+        if not text and response.get("results"):
+            text = response["results"][0].get("content", "")
+
+        # Look for patterns like "15 MAD", "15 DH", "15 dirhams"
+        patterns = [
+            r"(\d+(?:\.\d+)?)\s*(?:MAD|DH|dirham|درهم)",
+            r"(\d+(?:\.\d+)?)\s*(?:MAD|DH)",
+            r"prix[^\d]*(\d+(?:\.\d+)?)",
+        ]
+        for pattern in patterns:
+            match = re.search(pattern, text, re.IGNORECASE)
+            if match:
+                price = float(match.group(1))
+                if 0.5 < price < 1000:  # sanity check
+                    return {
+                        "price_mad": price,
+                        "unit": "kg",
+                        "source": "web search (Tavily)",
+                        "raw_snippet": text[:200],
+                    }
+    except Exception:
+        pass
+    return None
+
+
+def _fallback_price(ingredient: str) -> dict:
+    """Match ingredient against price table (substring match, best effort)."""
+    ing_lower = ingredient.lower().strip()
+
+    # Exact match first
+    if ing_lower in _PRICE_TABLE_MAD:
+        entry = _PRICE_TABLE_MAD[ing_lower]
+        return {**entry, "source": "price table"}
+
+    # Substring match
+    for key, entry in _PRICE_TABLE_MAD.items():
+        if key in ing_lower or ing_lower in key:
+            return {**entry, "source": "price table"}
+
+    # Unknown ingredient
+    return {
+        "price_mad": None,
+        "unit": "kg",
+        "notes": "price not available for this ingredient",
+        "source": "not found",
+    }
+
+
+@tool
+def get_ingredient_prices(ingredients: list[str]) -> str:
+    """
+    Get current Moroccan market prices (in MAD — Moroccan Dirham) for a list
+    of ingredient names.
+
+    Strategy:
+      1. Web search via Tavily for live prices (if API key is configured)
+      2. Fall back to a maintained price table of common Moroccan ingredients
+
+    Returns a JSON string with per-ingredient prices and a total estimated
+    recipe cost.
+
+    Example input: ["chicken", "onion", "cumin", "olive oil"]
+    """
+    results = {}
+    total_found = 0
+    found_count = 0
+
+    for ingredient in ingredients:
+        # Try live search first
+        live = _search_price(ingredient)
+        if live:
+            results[ingredient] = live
+        else:
+            results[ingredient] = _fallback_price(ingredient)
+
+        price = results[ingredient].get("price_mad")
+        if price is not None:
+            total_found += price
+            found_count += 1
+
+    return json.dumps({
+        "prices": results,
+        "currency": "MAD (Moroccan Dirham)",
+        "note": (
+            "Prices are per-unit (usually kg). "
+            "Souk prices may be 10-20% lower than supermarket. "
+            "Seasonal vegetables vary significantly."
+        ),
+    }, ensure_ascii=False)
+
+
+
 # ── Tool registry ─────────────────────────────────────────────────────
-ALL_TOOLS = [web_search, web_scrape, nutrition_lookup]
+ALL_TOOLS = [web_search, web_scrape, nutrition_lookup, get_ingredient_prices]

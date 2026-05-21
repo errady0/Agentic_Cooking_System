@@ -86,6 +86,7 @@ class KitchenOrchestrator:
             "max_iterations": max_iterations,
             "recommended_recipes": [],
             "current_recipe": None,
+            "ingredient_prices": None,
             "nutrition_analysis": None,
             "critic_feedback": None,
             "final_response": "",

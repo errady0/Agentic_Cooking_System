@@ -24,7 +24,7 @@ Raw nutritional data (per serving): {raw_data}
 User dietary constraints: {dietary}
 
 Analyse the nutrition data and reply with a JSON object (no markdown):
-  "per_serving"        : {{calories, carbs_g, protein_g, fat_g, fibre_g}}
+  "per_serving"        : {{calories, carbs_g, protein_g, fat_g, sugar_g, fibre_g}}
   "health_notes"       : list of 2-3 brief health observations
   "dietary_flags"      : list of any conflicts with user's constraints
   "mediterranean_score": 1-10 rating of how well this fits a Mediterranean diet
@@ -52,7 +52,7 @@ def nutrition_agent(state: KitchenState) -> KitchenState:
     try:
         raw = nutrition_lookup.invoke({"dish_name": dish_name, "servings": servings})
         raw_data = json.loads(raw)
-        per_serving = raw_data.get("per_serving", {})
+        per_serving = raw_data.get("per_serving")
         data_source = raw_data.get("source", "estimated")
     except Exception as e:
         per_serving = {}

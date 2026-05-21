@@ -38,6 +38,7 @@ class KitchenState(TypedDict):
     # ── Agent outputs (filled as agents run) ────────────────────────
     recommended_recipes: list[dict]          # from recommendation agent
     current_recipe: Optional[dict]           # from chef agent
+    ingredient_prices: Optional[dict]        # from get_ingredient_prices tool (in chef)
     nutrition_analysis: Optional[dict]       # from nutrition agent
     critic_feedback: Optional[dict]          # from critic agent
 
