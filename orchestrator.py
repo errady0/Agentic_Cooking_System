@@ -105,9 +105,9 @@ class KitchenOrchestrator:
 
         return KitchenResult(
             final_response=final_state.get("final_response", ""),
-            recipe=final_state.get("current_recipe"),
+            recipe=final_state.get("current_recipe", []),
             recommended_recipes=final_state.get("recommended_recipes", []),
-            nutrition=final_state.get("nutrition_analysis"),
+            nutrition=final_state.get("nutrition_analysis", []),
             critic_score=final_state.get("critic_feedback", {}).get("score") if final_state.get("critic_feedback") else None,
             session_summary=final_state.get("session_summary", ""),
             iteration_count=final_state.get("iteration", 0),

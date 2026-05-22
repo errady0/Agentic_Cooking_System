@@ -1,6 +1,6 @@
 ingredients_price = {
     # ── Proteins ──────────────────────────────────────────────────────
-    "chicken":          {"price_mad": 30,   "unit": "kg",     "notes": "whole chicken, souk price"},
+    "chicken":          {"price_mad": 15,   "unit": "kg",     "notes": "whole chicken, souk price"},
     "chicken breast":   {"price_mad": 50,   "unit": "kg",     "notes": "boneless"},
     "lamb":             {"price_mad": 75,   "unit": "kg",     "notes": "bone-in, varies by season; avg of two sources"},
     "beef":             {"price_mad": 85,   "unit": "kg",     "notes": "average cut"},

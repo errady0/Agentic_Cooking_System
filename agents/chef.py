@@ -105,8 +105,6 @@ def chef_agent(state: KitchenState) -> KitchenState:
         }
 
     # ── Price lookup ──────────────────────────────────────────────────
-    # Extract ingredient names from the recipe and fetch Moroccan market prices.
-    prices = None
     try:
         ingredient_names = [
             ing.get("item", ing.get("name", ""))
@@ -115,15 +113,22 @@ def chef_agent(state: KitchenState) -> KitchenState:
         ]
         if ingredient_names:
             raw_prices = get_ingredient_prices.invoke({"ingredients": ingredient_names})
-            prices = json.loads(raw_prices)
-    except Exception:
-        prices = None  # pricing is best-effort, never blocks the recipe
+            prices = json.loads(raw_prices)["prices"] 
+            total = 0.0
+            for ing in recipe.get("ingredients", []):
+                if isinstance(ing, dict):
+                    name = ing.get("item", ing.get("name", ""))
+                    if name in prices:
+                        ing["price"] = prices[name]
+                        total += prices[name].get("price_mad", 0)
+            recipe["total_price"] = {"amount": round(total, 2), "currency": "MAD"}
 
+    except Exception:
+        pass
 
     return {
         **state,
         "current_recipe": recipe,
-        "ingredient_prices": prices,
         "next_agent": "nutrition",
         "messages": [
             AIMessage(content=f"[Chef] Recipe ready: {recipe.get('name', dish)}")

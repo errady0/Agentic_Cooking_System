@@ -15,7 +15,7 @@ Commands in the chat:
   /reset          — reset preferences
   /clear          — clear conversation history
   /help           — show this help
-  exit / quit     — quit the app
+  exit || quit     — quit the app
 """
 
 import argparse
@@ -196,7 +196,7 @@ def run_interactive(user_id: str, debug: bool):
             # Run the agent pipeline
             console.print("\n[dim]🔄 Reasonning...[/dim]")
             try:
-                result = orchestrator.run(user_input, max_iterations=3)
+                result = orchestrator.run(user_input, max_iterations=2)
                 print_result(result, debug=debug)
             except Exception as e:
                 console.print(f"[red]Error: {e}[/red]")
@@ -207,7 +207,7 @@ def run_interactive(user_id: str, debug: bool):
 
 def main():
     parser = argparse.ArgumentParser(description="Moroccan Kitchen AI — Terminal App")
-    parser.add_argument("--user-id", default="errady", help="User identifier")
+    parser.add_argument("--user-id", default="USER", help="User identifier")
     parser.add_argument("--debug", action="store_true", help="Show verbose agent traces")
     args = parser.parse_args()
 

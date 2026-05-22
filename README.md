@@ -117,6 +117,8 @@ moroccan_kitchen/
 │
 ├── memory/
 │   └── long_term.py         # Postgres/SQLite long-term memory
+│   └── nutrition_base.py    # Local nutrition estimation 
+│   └── price_base.py        # Local ingredient prices
 │
 ├── tools/
 │   └── kitchen_tools.py     # web_search, web_scrape, nutrition_lookup
