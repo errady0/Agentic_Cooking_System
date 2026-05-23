@@ -1,12 +1,12 @@
 """
 graph.py
 
-Defines the LangGraph StateGraph for the Moroccan Kitchen multi-agent system.
-
 Node layout:
-  supervisor_entry
+  supervisor_classify
        ↓
-  recommendation  ←── (if needed)
+  supervisor_entry ──→ END (out_of_scope / culinary_info)
+       ↓
+  recommendation  (if needed)
        ↓
      chef         ←── (revision loop from supervisor_review)
        ↓
@@ -15,11 +15,6 @@ Node layout:
     critic
        ↓
   supervisor_review ──→ chef (revision) | END
-       ↓
-      END
-
-Short-term memory (session): LangGraph MemorySaver checkpoint
-Long-term memory: handled outside the graph in KitchenOrchestrator
 """
 
 from __future__ import annotations
@@ -28,106 +23,106 @@ from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.memory import MemorySaver
 
 from agents.state import KitchenState
-from agents.supervisor import supervisor_entry, supervisor_review
+from agents.supervisor import supervisor_classify, supervisor_entry, supervisor_review
 from agents.recommendation import recommendation_agent
 from agents.chef import chef_agent
 from agents.nutrition import nutrition_agent
 from agents.critic import critic_agent
 
 
-# ── Routing functions ────────────────────────────────────────────────
+# ── Routing functions ─────────────────────────────────────────────────────────
+
+def route_after_classify(state: KitchenState) -> str:
+    """Route based on intent — classify step sets this."""
+    return state.get("intent", "culinary")
+    # returns: "culinary" | "culinary_info" | "out_of_scope"
+
 
 def route_after_entry(state: KitchenState) -> str:
-    """Route to first specialist agent after supervisor parses the intent."""
-    return state.get("next_agent", "recommendation")
-
-
-def route_after_recommendation(state: KitchenState) -> str:
-    return state.get("next_agent", "chef")
-
-
-def route_after_chef(state: KitchenState) -> str:
-    return state.get("next_agent", "nutrition")
-
-
-def route_after_nutrition(state: KitchenState) -> str:
-    return state.get("next_agent", "critic")
-
-
-def route_after_critic(state: KitchenState) -> str:
-    return state.get("next_agent", "supervisor_review")
+    next_agent = state.get("next_agent", "recommendation")
+    valid = {"recommendation", "chef", "nutrition", "END"}
+    if next_agent not in valid:
+        return "recommendation"  # safe fallback
+    return next_agent
 
 
 def route_after_review(state: KitchenState) -> str:
-    """Either end the conversation or loop back to chef for revision."""
-    if state.get("done"):
-        return END
-    return state.get("next_agent", END)
+    next_agent = state.get("next_agent", "END")
+    valid = {"chef", "END"}
+    if next_agent not in valid:
+        return "END"
+    return next_agent
 
 
-# ── Build the graph ──────────────────────────────────────────────────
+# ── Build the graph ───────────────────────────────────────────────────────────
 
 def build_graph(use_checkpointing: bool = True) -> StateGraph:
     builder = StateGraph(KitchenState)
 
-    # Add nodes
-    builder.add_node("supervisor_entry", supervisor_entry)
-    builder.add_node("recommendation", recommendation_agent)
-    builder.add_node("chef", chef_agent)
-    builder.add_node("nutrition", nutrition_agent)
-    builder.add_node("critic", critic_agent)
-    builder.add_node("supervisor_review", supervisor_review)
+    # ── Nodes ─────────────────────────────────────────────────────────────────
+    builder.add_node("supervisor_classify", supervisor_classify)
+    builder.add_node("supervisor_entry",    supervisor_entry)
+    builder.add_node("recommendation",      recommendation_agent)
+    builder.add_node("chef",                chef_agent)
+    builder.add_node("nutrition",           nutrition_agent)
+    builder.add_node("critic",              critic_agent)
+    builder.add_node("supervisor_review",   supervisor_review)
 
-    # Entry point
-    builder.set_entry_point("supervisor_entry")
+    # ── Entry point ───────────────────────────────────────────────────────────
+    builder.set_entry_point("supervisor_classify")
 
-    # Edges
+    # ── Edges ─────────────────────────────────────────────────────────────────
+
+    # classify → entry (culinary) | END (culinary_info / out_of_scope)
+    builder.add_conditional_edges(
+        "supervisor_classify",
+        route_after_classify,
+        {
+            "culinary"     : "supervisor_entry",  # needs pipeline routing
+            "culinary_info": END,                 # supervisor_entry handles direct answer inline
+            "out_of_scope" : END,                 # supervisor_entry handles decline inline
+        },
+    )
+
+    # classify always passes to entry — entry decides what happens next
+    builder.add_edge("supervisor_classify", "supervisor_entry")
+
+    # entry → pipeline agents | END
     builder.add_conditional_edges(
         "supervisor_entry",
         route_after_entry,
         {
             "recommendation": "recommendation",
-            "chef": "chef",
-            "nutrition": "nutrition",
+            "chef"          : "chef",
+            "nutrition"     : "nutrition",
+            "END"             : END,              # out_of_scope or culinary_info
         },
     )
-    builder.add_conditional_edges(
-        "recommendation",
-        route_after_recommendation,
-        {"chef": "chef"},
-    )
-    builder.add_conditional_edges(
-        "chef",
-        route_after_chef,
-        {"nutrition": "nutrition"},
-    )
-    builder.add_conditional_edges(
-        "nutrition",
-        route_after_nutrition,
-        {"critic": "critic"},
-    )
-    builder.add_conditional_edges(
-        "critic",
-        route_after_critic,
-        {"supervisor_review": "supervisor_review"},
-    )
+
+    # Linear pipeline edges
+    builder.add_edge("recommendation", "chef")
+    builder.add_edge("chef",           "nutrition")
+    builder.add_edge("nutrition",      "critic")
+    builder.add_edge("critic",         "supervisor_review")
+
+    # review → revision loop | END
     builder.add_conditional_edges(
         "supervisor_review",
         route_after_review,
         {
-            "chef": "chef",       # revision loop
-            END: END,
+            "chef": "chef",
+            "END"   : END,
         },
     )
 
-    # Compile with or without checkpointing
     if use_checkpointing:
         memory = MemorySaver()
         return builder.compile(checkpointer=memory)
     return builder.compile()
 
 
-# Singleton graph instance
+# ── Singleton ─────────────────────────────────────────────────────────────────
+
 _graph = None
 
 def get_graph(use_checkpointing: bool = True):

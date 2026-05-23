@@ -29,6 +29,10 @@ class KitchenState(TypedDict):
     user_preferences: dict[str, Any]         # liked, disliked, dietary, flavor_notes
     history_summary: str                     # last N session summaries
 
+    # ── Intent classification (set first, drives all routing) ────────
+    intent: str                              # culinary | culinary_info | out_of_scope
+    classified: dict                         # carry need_recommendation, need_recipe etc forward
+
     # ── Supervisor control ──────────────────────────────────────────
     objective: str                           # parsed goal from supervisor
     next_agent: str                          # which agent runs next
@@ -38,7 +42,6 @@ class KitchenState(TypedDict):
     # ── Agent outputs (filled as agents run) ────────────────────────
     recommended_recipes: list[dict]          # from recommendation agent
     current_recipe: Optional[dict]           # from chef agent
-    ingredient_prices: Optional[dict]        # from get_ingredient_prices tool (in chef)
     nutrition_analysis: Optional[dict]       # from nutrition agent
     critic_feedback: Optional[dict]          # from critic agent
 

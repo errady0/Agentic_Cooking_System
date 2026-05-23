@@ -149,7 +149,7 @@ def handle_command(cmd: str, orchestrator: KitchenOrchestrator) -> bool:
 
     if verb == "/reset":
         orchestrator.reset_preferences()
-        console.print("[dim]Preferences reseted.[/dim]")
+        console.print("[dim]Preferences reset.[/dim]")
         return True
 
     if verb == "/clear":
@@ -194,7 +194,7 @@ def run_interactive(user_id: str, debug: bool):
                 continue
 
             # Run the agent pipeline
-            console.print("\n[dim]🔄 Reasonning...[/dim]")
+            console.print("\n[dim]🔄 Thinking...[/dim]")
             try:
                 result = orchestrator.run(user_input, max_iterations=2)
                 print_result(result, debug=debug)
