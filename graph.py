@@ -4,7 +4,7 @@ graph.py
 Node layout:
   supervisor_classify
        ↓
-  supervisor_entry ──→ END (out_of_scope / culinary_info)
+  supervisor_entry ──→ END (out_of_scope / culinary_info / chitchat)
        ↓
   recommendation  (if needed)
        ↓
@@ -35,7 +35,7 @@ from agents.critic import critic_agent
 def route_after_classify(state: KitchenState) -> str:
     """Route based on intent — classify step sets this."""
     return state.get("intent", "culinary")
-    # returns: "culinary" | "culinary_info" | "out_of_scope"
+    # returns: "culinary" | "culinary_info" | "chitchat" | "out_of_scope"
 
 
 def route_after_entry(state: KitchenState) -> str:
@@ -80,6 +80,7 @@ def build_graph(use_checkpointing: bool = True) -> StateGraph:
         {
             "culinary"     : "supervisor_entry",  # needs pipeline routing
             "culinary_info": END,                 # supervisor_entry handles direct answer inline
+            "chitchat"     : END,                 # supervisor_entry handles friendly answer
             "out_of_scope" : END,                 # supervisor_entry handles decline inline
         },
     )
@@ -95,7 +96,7 @@ def build_graph(use_checkpointing: bool = True) -> StateGraph:
             "recommendation": "recommendation",
             "chef"          : "chef",
             "nutrition"     : "nutrition",
-            "END"             : END,              # out_of_scope or culinary_info
+            "END"             : END,              # out_of_scope or culinary_info or chitchat
         },
     )
 

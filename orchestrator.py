@@ -10,7 +10,7 @@ It handles:
   - Providing a clean API for both the terminal app AND future web/REST backend
 
 Usage:
-    orchestrator = KitchenOrchestrator(user_id="alice")
+    orchestrator = KitchenOrchestrator(user_id="ahmed")
     result = orchestrator.run("I want to make a Moroccan lamb tagine for 6 people")
     print(result.final_response)
     print(result.recipe)
@@ -142,6 +142,9 @@ class KitchenOrchestrator:
 
     def clear_history(self):
         self.memory.clear_history()
+
+    def drop_users(self):
+        self.memory.drop_users()
 
     def close(self):
         self.memory.close()

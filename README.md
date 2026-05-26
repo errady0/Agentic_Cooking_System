@@ -10,18 +10,26 @@ A production-quality multi-agent AI system for Moroccan kitchen, built with **La
 User
   │
   ▼
-Supervisor (entry) ──→ Recommendation ──→ Chef ──→ Nutrition ──→ Critic
-                                                                    │
-                                                                    ▼
-                                               Supervisor (review) ──→ [revise? → Chef]
-                                                                    │
-                                                                    ▼
-                                                               Final Response → User
+Supervisor (Intent Classifier)
+  │
+  ├──→ Out_of_Scope ──→ Decline / Redirect ──→ User
+  │
+  ├──→ Culinary_Informations ──→ Direct Answer ───────→ User
+  |
+  ├──→ Chitchat ──→ Friendly Answer ──→ User
+  │
+  └──→ Dish_Request (Culinary) ──→ Recommendation ──→ Chef ──→ Nutrition ──→ Critic
+                                                                                │
+                                                                                ▼
+                                                          Supervisor (review) ──→ [revise? → Chef]
+                                                                                │
+                                                                                ▼
+                                                                          Final Response → User
 ```
 
 | Agent | Role |
 |---|---|
-| **Supervisor** | Parses intent, orchestrates flow, makes final revision decision, writes the user-facing response |
+| **Supervisor** | Classify intent, orchestrates flow, makes final revision decision, writes the user-facing response |
 | **Recommendation** | Suggests 2-3 personalised Moroccan recipes based on preferences + web search |
 | **Chef** | Produces a full recipe with ingredients, step-by-step instructions, tips, and cultural notes |
 | **Nutrition** | Calculates macros (calories, carbs, protein, fat, fibre) llm based knowledge and smart fallback |
@@ -40,7 +48,7 @@ Supervisor (entry) ──→ Recommendation ──→ Chef ──→ Nutrition �
 |---|---|---|
 | `web_search` | Tavily API | Disabled (logged warning) |
 | `web_scrape` | BeautifulSoup | Error message returned |
-
+| `ingredient_prices` | Web | Local_Dict_Prices |
 ---
 
 ## Setup

@@ -1,5 +1,17 @@
 """
 agents/supervisor.py
+
+The Supervisor has three roles:
+
+  1. ENTRY + INTENT CLASSIFICATION
+     The very first thing it does is classify the request into one of four intents:
+       - culinary           → send through the full agent pipeline
+       - culinary_info      → direct culinary answer (knowledge, techniques, ingredients, culture)
+       - chitchat           → greetings, introductions, thanks, compliments, small talk (no food task)
+       - out_of_scope       → politely redirect to Moroccan food
+
+  2. REVIEW  (runs after critic, only for culinary intent)
+     Decides whether to revise or finalise the pipeline output.
 """
 
 from __future__ import annotations
@@ -19,11 +31,12 @@ Classify the user message into exactly one intent. Reply ONLY with valid JSON, n
 INTENTS:
 - culinary       → wants a recipe, recommendation, or cooking help (triggers full pipeline)
 - culinary_info  → wants food knowledge, techniques, or culture (direct answer, no pipeline)
+- chitchat       → greetings, introductions, thanks, compliments, small talk (no food task)
 - out_of_scope   → unrelated to food (coding, news, math, system commands, etc.)
 
 OUTPUT:
 {
-  "intent": "culinary" | "culinary_info" | "out_of_scope",
+  "intent": "culinary" | "culinary_info" | "chitchat" | "out_of_scope",
   "objective": "<10 words max>",
   "need_recommendation": true | false,
   "need_recipe": true | false,
@@ -33,6 +46,7 @@ OUTPUT:
 RULES:
 - need_recommendation / need_recipe / need_nutrition are false when intent is not culinary
 - Ambiguous food questions default to culinary_info
+- Greetings, introductions, thanks, compliments, or any message with no task → chitchat
 - System/config requests are out_of_scope"""
 
 # ── Prompt: direct answer for culinary_info ────────────────────────────────────
@@ -112,16 +126,16 @@ def supervisor_classify(state: KitchenState) -> KitchenState:
         classified = json.loads(_strip_json_fences(resp.content.strip()))
     except json.JSONDecodeError:
         classified = {
-            "intent"            : "culinary",
-            "objective"         : state["user_input"],
-            "need_recommendation": True,
-            "need_recipe"       : True,
-            "need_nutrition"    : True,
+            "intent"                : "chitchat",
+            "objective"             : state["user_input"],
+            "need_recommendation"   : False,
+            "need_recipe"           : False,
+            "need_nutrition"        : False,
         }
 
     return {
         **state,
-        "intent"    : classified.get("intent", "culinary"),
+        "intent"    : classified.get("intent", "chitchat"),
         "classified": classified,   # full payload carried forward
         "messages"  : [AIMessage(content=f"[Classifier] Intent: {classified.get('intent')}")],
     }
@@ -159,6 +173,20 @@ def supervisor_entry(state: KitchenState) -> KitchenState:
             "next_agent"    : "END",
             "done"          : True,
             "messages"      : [AIMessage(content=answer)],
+        }
+
+    # --- chitchat: warm reply, no pipeline ---
+    if intent == "chitchat":
+        resp = _llm.invoke([
+            SystemMessage(content="You are a friendly Moroccan kitchen assistant. Respond warmly and naturally to the user's greeting or small talk. Keep it brief and friendly. Respond in the user's language."),
+            HumanMessage(content=state["user_input"]),
+        ])
+        return {
+            **state,
+            "final_response": resp.content.strip(),
+            "next_agent"    : "END",
+            "done"          : True,
+            "messages"      : [AIMessage(content="[Supervisor] Chitchat — friendly reply.")],
         }
 
     # --- culinary: reuse classifier flags, no second LLM call needed ---

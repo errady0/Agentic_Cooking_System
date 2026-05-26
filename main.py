@@ -156,6 +156,11 @@ def handle_command(cmd: str, orchestrator: KitchenOrchestrator) -> bool:
         orchestrator.clear_history()
         console.print("[dim]History cleared.[/dim]")
         return True
+    
+    if verb == "/drop":
+        orchestrator.drop_users()
+        console.print("[dim]Users droped.[/dim]")
+        return True
 
     return False
 
