@@ -143,9 +143,6 @@ class KitchenOrchestrator:
     def clear_history(self):
         self.memory.clear_history()
 
-    def drop_users(self):
-        self.memory.drop_users()
-
     def close(self):
         self.memory.close()
 

@@ -46,7 +46,7 @@ OUTPUT:
 RULES:
 - need_recommendation / need_recipe / need_nutrition are false when intent is not culinary
 - Ambiguous food questions default to culinary_info
-- Greetings, introductions, thanks, compliments, or any message with no task → chitchat
+- Greetings, introductions, thanks, compliments, small talk → chitchat
 - System/config requests are out_of_scope"""
 
 # ── Prompt: direct answer for culinary_info ────────────────────────────────────
@@ -79,7 +79,7 @@ User context:
   Dietary constraints: {dietary}
   Previous sessions  : {history}"""
 
-# ── Prompt: final response + session summary ───────────────────────────────────
+# ── Prompt: final response ───────────────────────────────────
 _SYSTEM_FINAL = """You are the Supervisor of a Moroccan kitchen AI assistant.
 Compose a warm, complete, well-structured response in the user's language.
 
@@ -178,7 +178,7 @@ def supervisor_entry(state: KitchenState) -> KitchenState:
     # --- chitchat: warm reply, no pipeline ---
     if intent == "chitchat":
         resp = _llm.invoke([
-            SystemMessage(content="You are a friendly Moroccan kitchen assistant. Respond warmly and naturally to the user's greeting or small talk. Keep it brief and friendly. Respond in the user's language."),
+            SystemMessage(content="You are a friendly Moroccan kitchen assistant. Respond warmly and naturally to the user's greeting or small talk. Keep it brief and friendly with a bit of humor. Respond in the user's language."),
             HumanMessage(content=state["user_input"]),
         ])
         return {
@@ -262,16 +262,19 @@ def supervisor_review(state: KitchenState) -> KitchenState:
         HumanMessage(content=f"User asked: {state['user_input']}"),
     ])
 
-    try:
-        result = json.loads(_strip_json_fences(resp.content.strip()))
-    except json.JSONDecodeError:
-        result = {"response": resp.content.strip(), "session_summary": ""}
+    final = resp.content.strip()
+
+    summary_resp = _llm.invoke([
+        SystemMessage(content="Summarise this kitchen session in 1-2 sentences (dish discussed, user preferences noted)."),
+        HumanMessage(content=f"User asked: {state['user_input']}\nRecipe: {recipe.get('name', '') if recipe else 'none'}"),
+    ])
+    summary = summary_resp.content.strip()
 
     return {
         **state,
-        "final_response" : result.get("response", ""),
-        "session_summary": result.get("session_summary", ""),
+        "final_response" : final,
+        "session_summary": summary,
         "next_agent"     : "END",
         "done"           : True,
-        "messages"       : [AIMessage(content=result.get("response", ""))],
+        "messages"       : [AIMessage(content=final)],
     }

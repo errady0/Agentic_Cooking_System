@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 
 # Load .env from project root (works from any working directory)
 _ROOT = Path(__file__).resolve().parent.parent
-load_dotenv(_ROOT / ".env", override=False)
+load_dotenv(_ROOT / ".env", override=True)
 
 # ── LLM ─────────────────────────────────────────────────────────────
 # ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", ""), MODEL = "claude-sonnet-4-20250514"
@@ -22,8 +22,8 @@ TAVILY_API_KEY: str = os.getenv("TAVILY_API_KEY", "")
 
 # ── Database ─────────────────────────────────────────────────────────
 DATABASE_URL: str = os.getenv("DATABASE_URL", "")
-USE_SQLITE_FALLBACK: bool = os.getenv("USE_SQLITE_FALLBACK", "true").lower() == "true"
-SQLITE_PATH: str = str(_ROOT / "moroccan_kitchen.db")
+USE_SQLITE_FALLBACK: bool = os.getenv("USE_SQLITE_FALLBACK", "false").lower() == "true"
+SQLITE_PATH: str = str(_ROOT / "cma.db")
 
 # ── App ──────────────────────────────────────────────────────────────
 DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"

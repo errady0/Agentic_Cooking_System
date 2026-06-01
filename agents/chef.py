@@ -31,7 +31,7 @@ Reference from web (use as inspiration, not verbatim): {web_ref}
 
 Reply with a JSON object (no markdown) with these keys:
   "name"         : full dish name (English + Arabic/Darija)
-  "servings"     : number of servings (default 4)
+  "servings"     : number of servings (default 2)
   "ingredients"  : list of {{item, quantity, notes}} — include Moroccan spice names
   "steps"        : list of {{step_number, title, instruction, duration_minutes}}
   "tips"         : list of 2-3 chef tips
@@ -96,7 +96,7 @@ def chef_agent(state: KitchenState) -> KitchenState:
     except json.JSONDecodeError:
         recipe = {
             "name": dish,
-            "servings": 4,
+            "servings": 2,
             "ingredients": [],
             "steps": [{"step_number": 1, "title": "Prepare", "instruction": text[:500], "duration_minutes": 60}],
             "tips": [],

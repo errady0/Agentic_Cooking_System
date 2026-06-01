@@ -156,11 +156,6 @@ def handle_command(cmd: str, orchestrator: KitchenOrchestrator) -> bool:
         orchestrator.clear_history()
         console.print("[dim]History cleared.[/dim]")
         return True
-    
-    if verb == "/drop":
-        orchestrator.drop_users()
-        console.print("[dim]Users droped.[/dim]")
-        return True
 
     return False
 
@@ -201,7 +196,7 @@ def run_interactive(user_id: str, debug: bool):
             # Run the agent pipeline
             console.print("\n[dim]🔄 Thinking...[/dim]")
             try:
-                result = orchestrator.run(user_input, max_iterations=2)
+                result = orchestrator.run(user_input, max_iterations=3)
                 print_result(result, debug=debug)
             except Exception as e:
                 console.print(f"[red]Error: {e}[/red]")
