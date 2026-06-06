@@ -15,7 +15,7 @@ Commands in the chat:
   /reset          — reset preferences
   /clear          — clear conversation history
   /help           — show this help
-  exit || quit     — quit the app
+  exit | quit     — quit the app
 """
 
 import argparse
@@ -28,108 +28,147 @@ from rich.markdown import Markdown
 from rich.table import Table
 from rich.prompt import Prompt
 from rich import box
-from rich.text import Text
 
-# Add project root to path
 sys.path.insert(0, os.path.dirname(__file__))
 
 from config import settings, validate as validate_settings
-from orchestrator import KitchenOrchestrator
+from orchestrator import KitchenOrchestrator, KitchenResult
 
 console = Console()
 
 
+# ── Panel helpers ──────────────────────────────────────────────────────────────
+
+# Maps intent → (emoji, label, border colour)
+_INTENT_STYLE: dict[str, tuple[str, str, str]] = {
+    "culinary"              : ("🍽️",  "Recipe",          "green"),
+    "non_moroccan_culinary" : ("🌍",  "World Kitchen",   "green"),
+    "culinary_info"         : ("📖",  "Culinary Info",   "cyan"),
+    "chitchat"              : ("💬",  "Chat",            "yellow"),
+    "out_of_scope"          : ("🚫",  "Out of scope",    "red"),
+}
+
+
+def _panel_style(intent: str) -> tuple[str, str, str]:
+    return _INTENT_STYLE.get(intent, ("🍋", "Assistant", "green"))
+
+
+# ── Banner ────────────────────────────────────────────────────────────────────
+
 def print_banner():
-    banner = """[dim]Moroccan Kitchen AI! 
-Type [bold]/help[/bold] for commands | [bold]exit[/bold] to quit[/dim]
-"""
-    console.print(banner)
+    console.print(
+        "\n[bold green]🍋  Moroccan Kitchen AI[/bold green]\n"
+        "[dim]— Type [bold]/help[/bold] for commands | [bold]exit[/bold] to quit[/dim]\n"
+    )
 
 
-def print_result(result, debug: bool = False):
-    """Pretty-print the KitchenResult to the terminal."""
+# ── Result renderer ───────────────────────────────────────────────────────────
 
-    # Main response
+def print_result(result: KitchenResult, debug: bool = False):
+    """Pretty-print a completed KitchenResult."""
+    emoji, label, colour = _panel_style(result.intent)
+
     console.print()
     console.print(Panel(
         Markdown(result.final_response),
-        title="[bold green]🍋 Welcome to CMA [/bold green]",
-        border_style="green",
+        title=f"[bold {colour}]{emoji}  {label}[/bold {colour}]",
+        border_style=colour,
         padding=(1, 2),
     ))
 
-    # Quality indicator
+    # Quality score + iteration count (only for full pipeline runs)
     if result.critic_score is not None:
-        score_color = "green" if result.critic_score >= 7 else "yellow" if result.critic_score >= 5 else "red"
+        score_color = (
+            "green"  if result.critic_score >= 7 else
+            "yellow" if result.critic_score >= 5 else
+            "red"
+        )
         console.print(
-            f"[dim]  Quality score: [{score_color}]{result.critic_score}/10[/{score_color}]"
-            f"  |  Revision iterations: {result.iteration_count}[/dim]"
+            f"[dim]  Quality score: [{score_color}]{result.critic_score}/10"
+            f"[/{score_color}]  |  Revisions: {result.iteration_count}[/dim]"
         )
 
-    # Nutrition summary
+    # Nutrition table
     if result.nutrition:
         n = result.nutrition.get("per_serving", {})
         if n:
-            source = result.nutrition.get("data_source", "")
             med_score = result.nutrition.get("mediterranean_score", "")
             table = Table(
-                title="Nutrition per serving: ",
+                title="Nutrition per serving",
                 box=box.SIMPLE,
                 show_header=True,
                 header_style="bold cyan",
             )
-            table.add_column("Calories", style="bold")
-            table.add_column("Carbs")
-            table.add_column("Protein")
-            table.add_column("Fat")
-            table.add_column("Sugar")
-            table.add_column("Fibre")
-            table.add_column("Med. score")
+            for col in ("Calories", "Carbs", "Protein", "Fat", "Sugar", "Fibre", "Med. score"):
+                table.add_column(col)
             table.add_row(
-                f"{n.get('calories', '?')} kcal",
-                f"{n.get('carbs_g', '?')} g",
-                f"{n.get('protein_g', '?')} g",
-                f"{n.get('fat_g', '?')} g",
-                f"{n.get('sugar_g', '?')} g",
-                f"{n.get('fibre_g', '?')} g",
+                f"{n.get('calories',   '?')} kcal",
+                f"{n.get('carbs_g',    '?')} g",
+                f"{n.get('protein_g',  '?')} g",
+                f"{n.get('fat_g',      '?')} g",
+                f"{n.get('sugar_g',    '?')} g",
+                f"{n.get('fibre_g',    '?')} g",
                 f"{med_score}/10" if med_score else "—",
             )
             console.print(table)
 
-    # Debug: show raw agent outputs
+    # Debug extras
     if debug:
         if result.recommended_recipes:
-            console.print("[dim][Recommendation agent output][/dim]")
+            console.print("[dim][Recommendation agent][/dim]")
             for r in result.recommended_recipes:
-                console.print(f"  • {r.get('name')} — {r.get('difficulty')} — {r.get('time_minutes')} min")
-        console.print(f"[dim][Session summary] {result.session_summary}[/dim]")
+                console.print(
+                    f"  • {r.get('name')} — {r.get('difficulty')} — {r.get('time_minutes')} min"
+                )
+        if result.style_choice:
+            console.print(f"[dim][Style chosen] {result.style_choice}[/dim]")
+        if result.session_summary:
+            console.print(f"[dim][Session summary] {result.session_summary}[/dim]")
+        console.print(f"[dim][Intent] {result.intent}[/dim]")
 
+
+def print_clarification(result: KitchenResult):
+    """Render the clarification question for non-Moroccan dishes."""
+    console.print()
+    console.print(Panel(
+        Markdown(result.final_response),
+        title="[bold yellow]🌍  World Kitchen — Choose your style[/bold yellow]",
+        border_style="yellow",
+        padding=(1, 2),
+    ))
+
+
+# ── Slash-command handler ─────────────────────────────────────────────────────
 
 def handle_command(cmd: str, orchestrator: KitchenOrchestrator) -> bool:
     """Handle slash commands. Returns True if handled, False if unknown."""
     parts = cmd.strip().split(None, 1)
-    verb = parts[0].lower()
-    arg = parts[1] if len(parts) > 1 else ""
+    verb  = parts[0].lower()
+    arg   = parts[1] if len(parts) > 1 else ""
 
     if verb == "/help":
         console.print(Panel(__doc__, title="Help", border_style="blue"))
         return True
 
-    if verb in ["/preferences", "/pr"]:
+    if verb in ("/preferences", "/pr"):
         prefs = orchestrator.get_preferences()
         t = Table(title="Your stored preferences", box=box.SIMPLE)
         t.add_column("Category", style="bold")
         t.add_column("Values")
-        t.add_row("Liked dishes", ", ".join(prefs.get("liked", [])) or "—")
-        t.add_row("Disliked dishes", ", ".join(prefs.get("disliked", [])) or "—")
-        t.add_row("Dietary constraints", ", ".join(prefs.get("dietary", [])) or "—")
-        t.add_row("Flavor notes", prefs.get("flavor_notes", "") or "—")
+        t.add_row("Liked dishes",        ", ".join(prefs.get("liked",    [])) or "—")
+        t.add_row("Disliked dishes",     ", ".join(prefs.get("disliked", [])) or "—")
+        t.add_row("Dietary constraints", ", ".join(prefs.get("dietary",  [])) or "—")
+        t.add_row("Flavor notes",        prefs.get("flavor_notes", "") or "—")
         console.print(t)
         return True
 
     if verb == "/history":
         history = orchestrator.get_history()
-        console.print(Panel(history or "No history yet.", title="Session history", border_style="dim"))
+        console.print(Panel(
+            history or "No history yet.",
+            title="Session history",
+            border_style="dim",
+        ))
         return True
 
     if verb == "/like" and arg:
@@ -157,13 +196,57 @@ def handle_command(cmd: str, orchestrator: KitchenOrchestrator) -> bool:
         console.print("[dim]History cleared.[/dim]")
         return True
 
+    console.print(f"[red]Unknown command:[/red] {verb}  — type [bold]/help[/bold] for the list")
     return False
 
+
+# ── Clarification loop (non-Moroccan dish) ────────────────────────────────────
+
+def handle_clarification_loop(
+    result: KitchenResult,
+    orchestrator: KitchenOrchestrator,
+    debug: bool,
+):
+    """
+    When the graph is waiting for the user's style choice, display the
+    clarification question and re-invoke with their answer.
+    Retries once on empty input.
+    """
+    print_clarification(result)
+
+    for attempt in range(2):
+        try:
+            choice = Prompt.ask("\n[bold yellow]Your choice[/bold yellow]").strip()
+        except (EOFError, KeyboardInterrupt):
+            console.print("\n[dim]Cancelled — returning to main loop.[/dim]")
+            return
+
+        if not choice:
+            if attempt == 0:
+                console.print("[dim]Please type your choice (e.g. 'classic' or 'moroccan twist').[/dim]")
+                continue
+            # Second empty — default to classic silently
+            choice = "classic"
+            console.print("[dim]No choice given — going with the classic version.[/dim]")
+
+        console.print("\n[dim]🔄 Preparing your recipe...[/dim]")
+        try:
+            final_result = orchestrator.answer_style_choice(choice)
+            print_result(final_result, debug=debug)
+        except Exception as e:
+            console.print(f"[red]Error while preparing recipe: {e}[/red]")
+            if debug:
+                import traceback
+                traceback.print_exc()
+        return
+
+
+# ── Main interactive loop ─────────────────────────────────────────────────────
 
 def run_interactive(user_id: str, debug: bool):
     print_banner()
 
-    # Validate config
+    # Config warnings
     warnings = validate_settings()
     for w in warnings:
         console.print(f"[yellow]⚠  {w}[/yellow]")
@@ -171,7 +254,13 @@ def run_interactive(user_id: str, debug: bool):
         console.print()
 
     with KitchenOrchestrator(user_id=user_id) as orchestrator:
-        console.print(f"[dim]Session started: [bold]{user_id}[/bold][/dim]")
+        # Personalised welcome using stored username (falls back to user_id)
+        profile  = orchestrator.get_user_profile()
+        username = profile.get("username") or user_id
+        console.print(
+            f"[dim]Welcome back, [bold]{username}[/bold]! "
+            f"Session ID: [italic]{orchestrator.thread_id[:8]}…[/italic][/dim]"
+        )
 
         while True:
             try:
@@ -183,21 +272,25 @@ def run_interactive(user_id: str, debug: bool):
             if not user_input.strip():
                 continue
 
-            # Exit
             if user_input.strip().lower() in ("exit", "quit"):
                 console.print("\n[dim]Come back hungry! 🍋[/dim]")
                 break
 
-            # Commands
             if user_input.strip().startswith("/"):
                 handle_command(user_input.strip(), orchestrator)
                 continue
 
-            # Run the agent pipeline
-            console.print("\n[dim]🔄 Thinking...[/dim]")
+            # ── Normal pipeline run ───────────────────────────────────────────
+            console.print("\n[dim]🔄 Chef is Thinking...[/dim]")
             try:
                 result = orchestrator.run(user_input, max_iterations=3)
-                print_result(result, debug=debug)
+
+                if result.waiting:
+                    # Non-Moroccan dish: graph paused, needs style choice
+                    handle_clarification_loop(result, orchestrator, debug=debug)
+                else:
+                    print_result(result, debug=debug)
+
             except Exception as e:
                 console.print(f"[red]Error: {e}[/red]")
                 if debug:
@@ -205,10 +298,12 @@ def run_interactive(user_id: str, debug: bool):
                     traceback.print_exc()
 
 
+# ── Entry point ───────────────────────────────────────────────────────────────
+
 def main():
     parser = argparse.ArgumentParser(description="Moroccan Kitchen AI — Terminal App")
-    parser.add_argument("--user-id", default="USER", help="User identifier")
-    parser.add_argument("--debug", action="store_true", help="Show verbose agent traces")
+    parser.add_argument("--user-id", default="Guest", help="User identifier")
+    parser.add_argument("--debug",   action="store_true", help="Show verbose agent traces")
     args = parser.parse_args()
 
     run_interactive(user_id=args.user_id, debug=args.debug)

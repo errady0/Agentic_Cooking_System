@@ -34,13 +34,17 @@ from config import settings
 def _get_connection():
     """Return a DB-API 2 connection (Postgres or SQLite)."""
     if settings.USE_SQLITE_FALLBACK or not settings.DATABASE_URL:
-        return sqlite3.connect(settings.SQLITE_PATH, check_same_thread=False)
+        conn = sqlite3.connect(settings.SQLITE_PATH, check_same_thread=False)
+        # Must be set per-connection — SQLite resets it on each new connection.
+        conn.execute("PRAGMA foreign_keys = ON")
+        return conn
     try:
         import psycopg2
         return psycopg2.connect(settings.DATABASE_URL)
     except Exception:
-        # Graceful fallback if Postgres is unavailable
-        return sqlite3.connect(settings.SQLITE_PATH, check_same_thread=False)
+        conn = sqlite3.connect(settings.SQLITE_PATH, check_same_thread=False)
+        conn.execute("PRAGMA foreign_keys = ON")
+        return conn
 
 
 def _is_sqlite(conn) -> bool:
@@ -55,38 +59,47 @@ def _placeholder(conn) -> str:
 # ── Schema bootstrap ─────────────────────────────────────────────────
 
 _SCHEMA = """
+CREATE TABLE IF NOT EXISTS users (
+    user_id   TEXT PRIMARY KEY,
+    username  TEXT NOT NULL UNIQUE,
+    password  TEXT NOT NULL,
+    created   TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS user_preferences (
     user_id         TEXT PRIMARY KEY,
     liked_dishes    TEXT NOT NULL DEFAULT '[]',
     disliked_dishes TEXT NOT NULL DEFAULT '[]',
     dietary         TEXT NOT NULL DEFAULT '[]',
     flavor_notes    TEXT NOT NULL DEFAULT '',
-    updated_at      TEXT NOT NULL DEFAULT ''
+    updated_at      TEXT NOT NULL DEFAULT '',
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS conversation_summaries (
     id          INTEGER PRIMARY KEY {autoincrement},
     user_id     TEXT NOT NULL,
     summary     TEXT NOT NULL,
-    created_at  TEXT NOT NULL
+    created_at  TEXT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 """
 
 def _bootstrap(conn):
-    ph = _placeholder(conn)
     cur = conn.cursor()
     if _is_sqlite(conn):
+        # SQLite silently ignores FK constraints unless this pragma is set.
+        # Enable it before creating tables so ON DELETE CASCADE works correctly.
+        cur.execute("PRAGMA foreign_keys = ON")
         schema = _SCHEMA.format(autoincrement="")
-        for stmt in schema.strip().split(";"):
-            s = stmt.strip()
-            if s:
-                cur.execute(s)
     else:
         schema = _SCHEMA.format(autoincrement="GENERATED ALWAYS AS IDENTITY")
-        for stmt in schema.strip().split(";"):
-            s = stmt.strip()
-            if s:
-                cur.execute(s)
+
+    for stmt in schema.strip().split(";"):
+        s = stmt.strip()
+        if s:
+            cur.execute(s)
+
     conn.commit()
     cur.close()
 
@@ -111,26 +124,70 @@ class LongTermMemory:
         return _placeholder(self._conn)
 
     def _ensure_user_row(self):
-        ph = self._ph()
+        """
+        Guarantee that both a users row and a user_preferences row exist
+        for self.user_id. Called at init so every subsequent query is safe.
+
+        Terminal sessions pass a plain string (e.g. "ahmed") as user_id.
+        We try the plain string as username first; on collision we fall back
+        to "term_{user_id}" so we don't collide with web-registered accounts.
+        """
+        ph  = self._ph()
         cur = self._conn.cursor()
+
+        # ── Ensure users row ──────────────────────────────────────────
+        cur.execute(f"SELECT user_id FROM users WHERE user_id = {ph}", (self.user_id,))
+        if not cur.fetchone():
+            # Try plain username first, then a "term_" prefixed fallback
+            for candidate_username in (self.user_id, f"term_{self.user_id}"):
+                try:
+                    cur.execute(
+                        f"INSERT INTO users (user_id, username, password, created) "
+                        f"VALUES ({ph},{ph},{ph},{ph})",
+                        (self.user_id, candidate_username, "terminal_dummy", self._now()),
+                    )
+                    self._conn.commit()
+                    break   # success
+                except sqlite3.IntegrityError:
+                    self._conn.rollback()
+                    # username taken — try next candidate
+                    continue
+
+        # ── Ensure user_preferences row ───────────────────────────────
         cur.execute(
             f"SELECT user_id FROM user_preferences WHERE user_id = {ph}",
             (self.user_id,),
         )
         if not cur.fetchone():
-            cur.execute(
-                f"""INSERT INTO user_preferences
-                    (user_id, liked_dishes, disliked_dishes, dietary, flavor_notes, updated_at)
-                    VALUES ({ph},{ph},{ph},{ph},{ph},{ph})""",
-                (self.user_id, "[]", "[]", "[]", "", self._now()),
-            )
-            self._conn.commit()
+            try:
+                cur.execute(
+                    f"INSERT INTO user_preferences "
+                    f"(user_id, liked_dishes, disliked_dishes, dietary, flavor_notes, updated_at) "
+                    f"VALUES ({ph},{ph},{ph},{ph},{ph},{ph})",
+                    (self.user_id, "[]", "[]", "[]", "", self._now()),
+                )
+                self._conn.commit()
+            except sqlite3.IntegrityError:
+                self._conn.rollback()   # row was inserted by a concurrent call — safe to ignore
+
         cur.close()
 
     @staticmethod
     def _now() -> str:
         return datetime.now(timezone.utc).isoformat()
 
+    # ── User Profile ──────────────────────────────────────────────────
+
+    def get_user_profile(self) -> dict[str, Any]:
+        ph = self._ph()
+        cur = self._conn.cursor()
+        cur.execute(f"SELECT username FROM users WHERE user_id = {ph}", (self.user_id,))
+        row = cur.fetchone()
+        cur.close()
+        if not row:
+            return {"username": "Guest"}
+        return {"username": row[0]}
+        
     # ── Preferences ──────────────────────────────────────────────────
 
     def get_preferences(self) -> dict[str, Any]:

@@ -1,16 +1,21 @@
 """
 agents/supervisor.py
 
-The Supervisor has three roles:
+The Supervisor has four roles:
 
   1. ENTRY + INTENT CLASSIFICATION
-     The very first thing it does is classify the request into one of four intents:
-       - culinary           → send through the full agent pipeline
-       - culinary_info      → direct culinary answer (knowledge, techniques, ingredients, culture)
-       - chitchat           → greetings, introductions, thanks, compliments, small talk (no food task)
-       - out_of_scope       → politely redirect to Moroccan food
+     Classifies the request into one of five intents:
+       - culinary              → Moroccan dish/recipe/recommendation → full pipeline
+       - non_moroccan_culinary → Non-Moroccan dish detected → ask user: classic or Moroccan twist
+       - culinary_info         → Food knowledge / technique / culture → direct answer
+       - chitchat              → Greetings, personal talk, small talk → warm conversational reply
+       - out_of_scope          → Unrelated to food → polite dynamic decline
 
-  2. REVIEW  (runs after critic, only for culinary intent)
+  2. CLARIFY  (only for non_moroccan_culinary)
+     Presents the user with a choice: classic recipe vs Moroccan-style adaptation.
+     Sets user_style_choice and routes to the full pipeline.
+
+  3. REVIEW   (runs after critic, only for culinary / non_moroccan_culinary)
      Decides whether to revise or finalise the pipeline output.
 """
 
@@ -29,29 +34,43 @@ _SYSTEM_CLASSIFY = """You are the intent classifier for a Moroccan kitchen AI as
 Classify the user message into exactly one intent. Reply ONLY with valid JSON, no markdown.
 
 INTENTS:
-- culinary       → wants a recipe, recommendation, or cooking help (triggers full pipeline)
-- culinary_info  → wants food knowledge, techniques, or culture (direct answer, no pipeline)
-- chitchat       → greetings, introductions, thanks, compliments, small talk (no food task)
-- out_of_scope   → unrelated to food (coding, news, math, system commands, etc.)
+- culinary              → wants a Moroccan recipe, recommendation, or cooking help
+- non_moroccan_culinary → wants a recipe/cooking help for a dish that is clearly NOT Moroccan
+                          (pizza, sushi, burger, pasta, tacos, etc.)
+- culinary_info         → wants food knowledge, techniques, ingredients, or culinary culture
+                          (Moroccan or general food questions without a specific recipe request)
+- chitchat              → greetings, introductions, personal sharing (name, feelings),
+                          thanks, compliments, small talk — including talking about themselves
+- out_of_scope          → completely unrelated to food (coding, news, math, system commands, etc.)
 
-OUTPUT:
+IMPORTANT chitchat rules:
+- If the user shares personal information (name, age, where they live, how they feel),
+  that is ALWAYS chitchat, never out_of_scope.
+- Asking a question about themselves or their life is chitchat, Not out_of_scope.
+- Small talk that references food culturally but asks no cooking question is chitchat.
+
+OUTPUT format:
 {
-  "intent": "culinary" | "culinary_info" | "chitchat" | "out_of_scope",
-  "objective": "<10 words max>",
-  "need_recommendation": true | false,
-  "need_recipe": true | false,
-  "need_nutrition": true | false
+  "intent"              : "culinary" | "non_moroccan_culinary" | "culinary_info" | "chitchat" | "out_of_scope",
+  "objective"           : "<10 words max>",
+  "dish_hint"           : "<dish name if mentioned, else empty string>",
+  "dish_origin"         : "<cuisine/country of the dish if non_moroccan, else empty string>",
+  "need_recommendation" : true | false,
+  "need_recipe"         : true | false,
+  "need_nutrition"      : true | false,
+  "personal_facts"      : { }   // any personal facts the user revealed (e.g. {"name": "Ahmed"})
 }
 
 RULES:
-- need_recommendation / need_recipe / need_nutrition are false when intent is not culinary
+- If the user asks a personal question, classify it as chitchat.
+- need_recommendation / need_recipe / need_nutrition are false when intent is not culinary/non_moroccan_culinary
 - Ambiguous food questions default to culinary_info
-- Greetings, introductions, thanks, compliments, small talk → chitchat
 - System/config requests are out_of_scope"""
+
 
 # ── Prompt: direct answer for culinary_info ────────────────────────────────────
 _SYSTEM_DIRECT = """You are a Moroccan cuisine expert assistant.
-Answer the user's question about Moroccan food, techniques, ingredients, or culinary culture.
+Answer the user's question about food, techniques, ingredients, or culinary culture.
 Be warm, concise, and informative. Respond in the user's language.
 
 User context:
@@ -59,6 +78,7 @@ User context:
   Disliked        : {disliked}
   Dietary constraints: {dietary}
   Previous sessions  : {history}"""
+
 
 # ── Prompt: culinary routing (JSON) ───────────────────────────────────────────
 _SYSTEM_CULINARY = """You are the Supervisor of a Moroccan kitchen AI assistant.
@@ -79,21 +99,55 @@ User context:
   Dietary constraints: {dietary}
   Previous sessions  : {history}"""
 
-# ── Prompt: final response ───────────────────────────────────
+
+# ── Prompt: non-Moroccan clarification ────────────────────────────────────────
+_SYSTEM_CLARIFY = """You are a friendly Moroccan kitchen AI assistant.
+The user asked for a dish that is not traditionally Moroccan.
+Inform them warmly that this dish originates from {dish_origin} and is not Moroccan,
+but you can still help them prepare it.
+Offer them TWO clear options and ask them to choose:
+
+  => Classic {dish_hint} — the traditional {dish_origin} way
+  => Moroccan Twist — a {dish_hint} inspired by Moroccan spices and flavours
+
+Be warm, enthusiastic, and brief. Respond in the user's language.
+Do NOT cook the dish yet — just present the choice."""
+
+
+# ── Prompt: out-of-scope decline (dynamic, language-aware) ────────────────────
+_SYSTEM_OUT_OF_SCOPE = """You are a Moroccan kitchen AI assistant.
+The user asked something completely unrelated to food or cooking.
+Politely decline and redirect them to food-related topics.
+Be warm, brief, and slightly humorous. Respond in the user's language.
+Do NOT answer their non-food question."""
+
+
+# ── Prompt: chitchat ──────────────────────────────────────────────────────────
+_SYSTEM_CHITCHAT = """You are a friendly Moroccan kitchen AI assistant having a casual conversation.
+Respond warmly and naturally to the user's message.
+- If they introduced themselves or shared personal info, acknowledge it warmly and remember it.
+- Use their name if you know it: {user_name}
+- Keep it brief, friendly, and with a touch of Moroccan warmth.
+- You may gently invite them to ask about Moroccan food if natural, but don't force it.
+- Respond in the user's language."""
+
+
+# ── Prompt: final response ───────────────────────────────────────────────────
 _SYSTEM_FINAL = """You are the Supervisor of a Moroccan kitchen AI assistant.
 Compose a warm, complete, well-structured response in the user's language.
 
 You have:
-  - Recommended recipes: {recommended}
-  - Full recipe: {recipe}
-  - Nutrition analysis: {nutrition}
-  - Critic feedback: {critic}
+  - Recommended recipes : {recommended}
+  - Full recipe         : {recipe}
+  - Nutrition analysis  : {nutrition}
+  - Critic feedback     : {critic}
+  - Style chosen        : {style}   (classic | moroccan_twist | moroccan)
 
 Write the final answer. Include the recipe with steps, nutritional info,
 and personalised notes. If pricing data is available, include an estimated
-ingredient cost in MAD (mention it's a market estimate). Be conversational and friendly.
-If the critic flagged issues, address them naturally.
-"""
+ingredient cost in MAD (mention it's a market estimate).
+If style is "moroccan_twist", highlight the Moroccan adaptations clearly.
+Be conversational and friendly. If the critic flagged issues, address them naturally."""
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -107,16 +161,22 @@ def _strip_json_fences(text: str) -> str:
 
 def _format_prefs(prefs: dict, history: str) -> dict:
     return {
-        "liked"  : ", ".join(prefs.get("liked",    [])) or "none recorded",
+        "liked"   : ", ".join(prefs.get("liked",    [])) or "none recorded",
         "disliked": ", ".join(prefs.get("disliked", [])) or "none",
-        "dietary": ", ".join(prefs.get("dietary",  [])) or "none",
-        "history": history or "no previous sessions",
+        "dietary" : ", ".join(prefs.get("dietary",  [])) or "none",
+        "history" : history or "no previous sessions",
     }
+
+
+def _get_user_name(state: KitchenState) -> str:
+    """Pull user name from conversation_context if known."""
+    ctx = state.get("conversation_context", {})
+    return ctx.get("name", "")
 
 
 # ── Step 1: classify ──────────────────────────────────────────────────────────
 def supervisor_classify(state: KitchenState) -> KitchenState:
-    """Classify intent. Lightweight — no prefs or history needed."""
+    """Classify intent. Also extracts personal facts for chitchat memory."""
     resp = _llm.invoke([
         SystemMessage(content=_SYSTEM_CLASSIFY),
         HumanMessage(content=state["user_input"]),
@@ -126,44 +186,59 @@ def supervisor_classify(state: KitchenState) -> KitchenState:
         classified = json.loads(_strip_json_fences(resp.content.strip()))
     except json.JSONDecodeError:
         classified = {
-            "intent"                : "chitchat",
-            "objective"             : state["user_input"],
-            "need_recommendation"   : False,
-            "need_recipe"           : False,
-            "need_nutrition"        : False,
+            "intent"              : "chitchat",
+            "objective"           : state["user_input"],
+            "dish_hint"           : "",
+            "dish_origin"         : "",
+            "need_recommendation" : False,
+            "need_recipe"         : False,
+            "need_nutrition"      : False,
+            "personal_facts"      : {},
         }
+
+    # Merge any newly learned personal facts into conversation_context
+    existing_ctx = state.get("conversation_context", {})
+    new_facts    = classified.get("personal_facts", {})
+    merged_ctx   = {**existing_ctx, **new_facts}
 
     return {
         **state,
-        "intent"    : classified.get("intent", "chitchat"),
-        "classified": classified,   # full payload carried forward
-        "messages"  : [AIMessage(content=f"[Classifier] Intent: {classified.get('intent')}")],
+        "intent"              : classified.get("intent", "chitchat"),
+        "classified"          : classified,
+        "dish_hint"           : classified.get("dish_hint", ""),
+        "dish_origin"         : classified.get("dish_origin", ""),
+        "conversation_context": merged_ctx,
+        "messages"            : [AIMessage(content=f"[Classifier] Intent: {classified.get('intent')}")],
     }
 
 
 # ── Step 2: entry ─────────────────────────────────────────────────────────────
 def supervisor_entry(state: KitchenState) -> KitchenState:
-    """Act on classified intent — route to pipeline, direct answer, or END."""
+    """Act on classified intent — route to pipeline, clarify, direct answer, or END."""
     intent     = state.get("intent", "culinary")
     classified = state.get("classified", {})
     prefs      = state.get("user_preferences", {})
     history    = state.get("history_summary", "")
     ctx        = _format_prefs(prefs, history)
 
-    # --- out_of_scope ---
+    # ── out_of_scope: dynamic decline in user's language ──────────────────────
     if intent == "out_of_scope":
+        resp = _llm.invoke([
+            SystemMessage(content=_SYSTEM_OUT_OF_SCOPE),
+            HumanMessage(content=state["user_input"]),
+        ])
         return {
             **state,
-            "final_response": "I can only help with Moroccan cuisine — recipes, ingredients, techniques, and culinary culture. Feel free to ask me anything food-related!",
+            "final_response": resp.content.strip(),
             "next_agent"    : "END",
             "done"          : True,
             "messages"      : [AIMessage(content="[Supervisor] Out of scope — declined.")],
         }
 
-    # --- culinary_info: direct answer, no agents ---
+    # ── culinary_info: direct expert answer, no agents ────────────────────────
     if intent == "culinary_info":
         resp = _llm.invoke([
-            SystemMessage(content=_SYSTEM_DIRECT.format(**ctx)),  # correct prompt
+            SystemMessage(content=_SYSTEM_DIRECT.format(**ctx)),
             HumanMessage(content=state["user_input"]),
         ])
         answer = resp.content.strip()
@@ -175,10 +250,10 @@ def supervisor_entry(state: KitchenState) -> KitchenState:
             "messages"      : [AIMessage(content=answer)],
         }
 
-    # --- chitchat: warm reply, no pipeline ---
+    # ── chitchat: warm conversational reply, stores personal facts ────────────
     if intent == "chitchat":
         resp = _llm.invoke([
-            SystemMessage(content="You are a friendly Moroccan kitchen assistant. Respond warmly and naturally to the user's greeting or small talk. Keep it brief and friendly with a bit of humor. Respond in the user's language."),
+            SystemMessage(content=_SYSTEM_CHITCHAT.format(user_name=state["user_name"] or "friend")),
             HumanMessage(content=state["user_input"]),
         ])
         return {
@@ -189,10 +264,20 @@ def supervisor_entry(state: KitchenState) -> KitchenState:
             "messages"      : [AIMessage(content="[Supervisor] Chitchat — friendly reply.")],
         }
 
-    # --- culinary: reuse classifier flags, no second LLM call needed ---
-    # Only call LLM again if objective/dish_hint are missing from classify step
+    # ── non_moroccan_culinary: route to clarify node ──────────────────────────
+    if intent == "non_moroccan_culinary":
+        return {
+            **state,
+            "next_agent"    : "clarify",
+            "objective"     : classified.get("objective", state["user_input"]),
+            "iteration"     : state.get("iteration", 0),
+            "max_iterations": state.get("max_iterations", 3),
+            "messages"      : [AIMessage(content=f"[Supervisor] Non-Moroccan dish detected → clarify")],
+        }
+
+    # ── culinary: reuse classifier flags, route to pipeline ──────────────────
     if classified.get("objective") and "need_recommendation" in classified:
-        parsed = classified  # reuse — saves one full LLM call
+        parsed = classified
     else:
         resp = _llm.invoke([
             SystemMessage(content=_SYSTEM_CULINARY.format(**ctx)),
@@ -202,11 +287,11 @@ def supervisor_entry(state: KitchenState) -> KitchenState:
             parsed = json.loads(_strip_json_fences(resp.content.strip()))
         except json.JSONDecodeError:
             parsed = {
-                "objective"         : state["user_input"],
+                "objective"          : state["user_input"],
                 "need_recommendation": True,
-                "need_recipe"       : True,
-                "need_nutrition"    : True,
-                "dish_hint"         : "",
+                "need_recipe"        : True,
+                "need_nutrition"     : True,
+                "dish_hint"          : "",
             }
 
     if parsed.get("need_recommendation"):
@@ -219,11 +304,74 @@ def supervisor_entry(state: KitchenState) -> KitchenState:
     return {
         **state,
         "objective"     : parsed.get("objective", state["user_input"]),
-        "dish_hint"     : parsed.get("dish_hint", ""),
+        "dish_hint"     : parsed.get("dish_hint", state.get("dish_hint", "")),
         "next_agent"    : next_agent,
+        "user_style_choice": "moroccan",   # pure Moroccan request, no choice needed
         "iteration"     : state.get("iteration", 0),
         "max_iterations": state.get("max_iterations", 3),
         "messages"      : [AIMessage(content=f"[Supervisor] Routing to → {next_agent}")],
+    }
+
+
+# ── Step 2b: clarify (non-Moroccan dishes only) ───────────────────────────────
+def supervisor_clarify(state: KitchenState) -> KitchenState:
+    """
+    Present the user with a choice:
+      1. Classic recipe (original cuisine)
+      2. Moroccan Twist (Moroccan spice/flavour adaptation)
+
+    This node generates the clarification message and WAITS — it sets
+    next_agent = "WAIT_FOR_USER" so the graph surfaces the question to the
+    application layer, which re-invokes the graph with the user's answer
+    stored in user_style_choice.
+
+    If user_style_choice is already set (second pass), skip clarification
+    and route directly into the pipeline.
+    """
+    style_choice = state.get("user_style_choice", "")
+
+    # ── Second pass: user already chose, route to pipeline ────────────────────
+    if style_choice in ("classic", "moroccan_twist"):
+        classified = state.get("classified", {})
+
+        if classified.get("need_recommendation"):
+            next_agent = "recommendation"
+        elif classified.get("need_recipe", True):
+            next_agent = "chef"
+        else:
+            next_agent = "nutrition"
+
+        # Enrich objective with the chosen style
+        dish  = state.get("dish_hint", "the dish")
+        style_label = "the classic way" if style_choice == "classic" else "with a Moroccan twist"
+        objective = f"Prepare {dish} {style_label}"
+
+        return {
+            **state,
+            "objective" : objective,
+            "next_agent": next_agent,
+            "messages"  : [AIMessage(content=f"[Clarify] Style chosen: {style_choice} → routing to {next_agent}")],
+        }
+
+    # ── First pass: ask the user ──────────────────────────────────────────────
+    dish   = state.get("dish_hint", "this dish")
+    origin = state.get("dish_origin", "another cuisine")
+
+    resp = _llm.invoke([
+        SystemMessage(content=_SYSTEM_CLARIFY.format(
+            dish_hint  = dish,
+            dish_origin= origin,
+        )),
+        HumanMessage(content=state["user_input"]),
+    ])
+    clarify_msg = resp.content.strip()
+
+    return {
+        **state,
+        "final_response": clarify_msg,   # surface to UI immediately
+        "next_agent"    : "WAIT_FOR_USER",
+        "done"          : False,         # NOT done — waiting for user reply
+        "messages"      : [AIMessage(content=clarify_msg)],
     }
 
 
@@ -251,6 +399,7 @@ def supervisor_review(state: KitchenState) -> KitchenState:
     recipe      = state.get("current_recipe")
     nutrition   = state.get("nutrition_analysis")
     recommended = state.get("recommended_recipes", [])
+    style       = state.get("user_style_choice", "moroccan")
 
     resp = _llm.invoke([
         SystemMessage(content=_SYSTEM_FINAL.format(
@@ -258,6 +407,7 @@ def supervisor_review(state: KitchenState) -> KitchenState:
             recipe     =json.dumps(recipe,     ensure_ascii=False) if recipe    else "none",
             nutrition  =json.dumps(nutrition,  ensure_ascii=False) if nutrition else "none",
             critic     =json.dumps(critic,     ensure_ascii=False) if critic    else "none",
+            style      =style,
         )),
         HumanMessage(content=f"User asked: {state['user_input']}"),
     ])
