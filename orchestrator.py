@@ -109,6 +109,18 @@ class KitchenOrchestrator:
 
     # ── Public API ────────────────────────────────────────────────────────────
 
+    def handle_message(self, user_input: str, max_iterations: int = 3) -> KitchenResult:
+        """Entry point that correctly resumes from checkpointer if waiting."""
+        config = {"configurable": {"thread_id": self.thread_id}}
+        current_state = self.graph.get_state(config)
+        
+        # If the graph was paused waiting for a style choice:
+        if current_state and current_state.values and current_state.values.get("next_agent") == "WAIT_FOR_USER":
+            self._pending_state = current_state.values
+            return self.answer_style_choice(user_input)
+            
+        return self.run(user_input, max_iterations)
+
     def run(self, user_input: str, max_iterations: int = 3) -> KitchenResult:
         """Run the full agent pipeline for a user message."""
         prefs   = self.memory.get_preferences()

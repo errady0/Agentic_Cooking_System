@@ -1,11 +1,16 @@
 """
 agents/critic.py
 
-The Critic evaluates the collective output of the recommendation, chef,
-and nutrition agents. It sends structured feedback back to the supervisor
-who decides whether a revision cycle is needed.
+The Critic evaluates the chef's recipe output and sends structured feedback
+to the supervisor who decides whether a revision cycle is needed.
 
 The Critic does NOT talk to the user — it only communicates with the supervisor.
+
+Evaluation criteria adapt based on recipe style:
+  - "moroccan"       → full authenticity check (spices, technique, culture)
+  - "moroccan_twist" → check fusion coherence, skip pure-Moroccan authenticity
+  - "classic"        → skip all Moroccan criteria entirely; judge on faithfulness
+                       to the dish's original cuisine
 """
 
 from __future__ import annotations
@@ -18,51 +23,123 @@ from agents.llm import get_llm
 
 _llm = get_llm()
 
-_SYSTEM = """You are a strict quality-control critic for a Moroccan kitchen AI system.
 
-Evaluate the following outputs and return a JSON object (no markdown):
+# ── Evaluation prompts — one per style ────────────────────────────────────────
 
-User objective: {objective}
-Recommended recipes: {recommended}
-Recipe provided: {recipe}
+_SYSTEM_MOROCCAN = """You are a strict quality-control critic for a Moroccan kitchen AI.
+
+User objective   : {objective}
+Recipe provided  : {recipe}
 Nutrition analysis: {nutrition}
-Iteration number: {iteration}
+Iteration        : {iteration}
 
-Evaluate on:
-1. Authenticity — Is the recipe genuinely Moroccan? Are spices/techniques correct?
-2. Completeness — Are steps clear and detailed enough to follow?
-3. Nutrition accuracy — Does the analysis look reasonable for this dish?
+Evaluate on these criteria:
+1. Moroccan authenticity — Are spices, techniques, and ingredients genuinely Moroccan?
+   (ras el hanout, chermoula, preserved lemon, proper tagine technique, etc.)
+2. Completeness — Are steps clear and detailed enough to follow at home?
+3. Nutrition accuracy — Does the nutritional analysis look reasonable for this dish?
 4. Relevance — Does the result match the user's objective?
-5. Safety — Any dietary conflicts?
+5. Safety — Any dietary conflicts with stated constraints?
 
-Reply with:
+Reply with a JSON object (no markdown):
   "score"          : 1-10 overall quality score
-  "needs_revision" : true/false (set false if score >= 7 or iteration >= 2)
-  "issues"         : list of specific problems found (empty list if none)
+  "needs_revision" : true | false  (false if score >= 7 or iteration >= 2)
+  "issues"         : list of specific problems (empty list if none)
   "suggestions"    : list of specific improvements for the chef
   "positive_notes" : list of what was done well
-  "verdict"        : one-sentence summary of the evaluation
+  "verdict"        : one-sentence summary
+"""
+
+_SYSTEM_MOROCCAN_TWIST = """You are a quality-control critic for a Moroccan fusion kitchen AI.
+
+User objective   : {objective}
+Recipe provided  : {recipe}
+Nutrition analysis: {nutrition}
+Iteration        : {iteration}
+
+The user chose a "Moroccan Twist" — the dish should keep its original structure
+but incorporate genuine Moroccan flavours and spices.
+
+Evaluate on these criteria:
+1. Fusion coherence — Do the Moroccan spices/ingredients complement the dish naturally,
+   or do they clash? Is the result a believable fusion?
+2. Moroccan identity — Are the Moroccan adaptations clearly listed and genuinely Moroccan
+   (ras el hanout, harissa, preserved lemon, chermoula, argan oil, etc.)?
+3. Original dish integrity — Is the base dish still recognisable?
+4. Completeness — Are steps clear and detailed enough to follow at home?
+5. Safety — Any dietary conflicts?
+
+Do NOT penalise the recipe for not being a "pure" Moroccan dish —
+that is intentional. Only flag issues with the fusion quality itself.
+
+Reply with a JSON object (no markdown):
+  "score"          : 1-10 overall quality score
+  "needs_revision" : true | false  (false if score >= 7 or iteration >= 2)
+  "issues"         : list of specific problems (empty list if none)
+  "suggestions"    : list of specific improvements for the chef
+  "positive_notes" : list of what was done well
+  "verdict"        : one-sentence summary
+"""
+
+_SYSTEM_CLASSIC = """You are a quality-control critic for a culinary AI assistant.
+
+User objective   : {objective}
+Recipe provided  : {recipe}
+Nutrition analysis: {nutrition}
+Origin cuisine   : {origin}
+Iteration        : {iteration}
+
+The user chose the CLASSIC version of this dish — it should be a faithful,
+authentic recipe from its original cuisine ({origin}).
+
+Evaluate on these criteria:
+1. Faithfulness — Is the recipe true to the dish's original {origin} tradition?
+   Are the correct spices, techniques, and ingredients used?
+2. Completeness — Are steps clear and detailed enough to follow at home?
+3. Correctness — No unwanted Moroccan ingredients or techniques crept in?
+4. Safety — Any dietary conflicts?
+
+Do NOT evaluate Moroccan authenticity at all — it is irrelevant here.
+
+Reply with a JSON object (no markdown):
+  "score"          : 1-10 overall quality score
+  "needs_revision" : true | false  (false if score >= 7 or iteration >= 2)
+  "issues"         : list of specific problems (empty list if none)
+  "suggestions"    : list of specific improvements for the chef
+  "positive_notes" : list of what was done well
+  "verdict"        : one-sentence summary
 """
 
 
+# ── Main agent ────────────────────────────────────────────────────────────────
+
 def critic_agent(state: KitchenState) -> KitchenState:
-    recipe = state.get("current_recipe")
+    recipe    = state.get("current_recipe") or {}
     nutrition = state.get("nutrition_analysis")
-    recommended = state.get("recommended_recipes", [])
     iteration = state.get("iteration", 0)
 
-    messages = [
-        SystemMessage(content=_SYSTEM.format(
-            objective=state.get("objective", state["user_input"]),
-            recommended=json.dumps(recommended[:2], ensure_ascii=False),
-            recipe=json.dumps(recipe, ensure_ascii=False) if recipe else "none",
-            nutrition=json.dumps(nutrition, ensure_ascii=False) if nutrition else "none",
-            iteration=iteration,
-        )),
-        HumanMessage(content="Evaluate the outputs."),
-    ]
+    # Style comes from the recipe itself (most reliable) with state as fallback
+    style  = recipe.get("style") or state.get("user_style_choice") or "moroccan"
+    origin = recipe.get("origin") or state.get("dish_origin") or "international"
 
-    resp = _llm.invoke(messages)
+    shared = dict(
+        objective  = state.get("objective", state["user_input"]),
+        recipe     = json.dumps(recipe,     ensure_ascii=False) if recipe    else "none",
+        nutrition  = json.dumps(nutrition,  ensure_ascii=False) if nutrition else "none",
+        iteration  = iteration,
+    )
+
+    if style == "classic":
+        prompt = _SYSTEM_CLASSIC.format(**shared, origin=origin)
+    elif style == "moroccan_twist":
+        prompt = _SYSTEM_MOROCCAN_TWIST.format(**shared)
+    else:
+        prompt = _SYSTEM_MOROCCAN.format(**shared)
+
+    resp = _llm.invoke([
+        SystemMessage(content=prompt),
+        HumanMessage(content="Evaluate the recipe output."),
+    ])
     text = resp.content.strip()
 
     if text.startswith("```"):
@@ -75,15 +152,15 @@ def critic_agent(state: KitchenState) -> KitchenState:
         feedback = json.loads(text)
     except json.JSONDecodeError:
         feedback = {
-            "score": 7,
+            "score"         : 7,
             "needs_revision": False,
-            "issues": [],
-            "suggestions": [],
+            "issues"        : [],
+            "suggestions"   : [],
             "positive_notes": ["Recipe generated"],
-            "verdict": "Acceptable output",
+            "verdict"       : "Acceptable output",
         }
 
-    # Force no-revision if score is good or we've iterated enough
+    # Hard guard: never force revision if score is good or iterations exhausted
     score = feedback.get("score", 7)
     if score >= 7 or iteration >= state.get("max_iterations", 3) - 1:
         feedback["needs_revision"] = False
@@ -91,11 +168,11 @@ def critic_agent(state: KitchenState) -> KitchenState:
     return {
         **state,
         "critic_feedback": feedback,
-        "next_agent": "supervisor_review",
-        "messages": [
-            AIMessage(
-                content=f"[Critic] Score {feedback.get('score', '?')}/10 — "
-                        f"{'revision needed' if feedback.get('needs_revision') else 'approved'}"
+        "next_agent"     : "supervisor_review",
+        "messages"       : [AIMessage(
+            content=(
+                f"[Critic/{style}] Score {feedback.get('score', '?')}/10 — "
+                f"{'revision needed' if feedback.get('needs_revision') else 'approved'}"
             )
-        ],
+        )],
     }

@@ -78,7 +78,14 @@ def nutrition_agent(state: KitchenState) -> KitchenState:
 
     try:
         analysis = json.loads(text)
-        analysis["data_source"] = data_source
+        # Pin the trusted raw lookup values into per_serving when available.
+        # The LLM is used for health notes, flags, score and suggestions only —
+        # NOT for generating alternative calorie/macro numbers.
+        if per_serving:
+            analysis["per_serving"] = per_serving
+        # Only set data_source if the LLM didn't already provide one
+        if not analysis.get("data_source"):
+            analysis["data_source"] = data_source
     except json.JSONDecodeError:
         analysis = {
             "per_serving": per_serving,

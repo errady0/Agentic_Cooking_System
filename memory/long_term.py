@@ -209,23 +209,29 @@ class LongTermMemory:
             "flavor_notes": row[3],
         }
 
-    def update_preferences(self, data: dict[str, Any]):
+    def update_preferences(self, data: dict[str, Any], merge: bool = True):
         """
-        Merge incoming preference data with existing.
+        Merge incoming preference data with existing, or replace if merge=False.
         data keys: liked, disliked, dietary, flavor_notes  (all optional)
         """
         current = self.get_preferences()
 
-        def _merge_list(key: str) -> list:
-            existing = set(current.get(key, []))
-            new_items = data.get(key, [])
-            existing.update(new_items)
-            return list(existing)
+        def _get_list(key: str) -> list:
+            if merge:
+                existing = set(current.get(key, []))
+                new_items = data.get(key, [])
+                existing.update(new_items)
+                return list(existing)
+            else:
+                return data.get(key, [])
 
-        liked = _merge_list("liked")
-        disliked = _merge_list("disliked")
-        dietary = _merge_list("dietary")
-        flavor_notes = data.get("flavor_notes", current["flavor_notes"])
+        liked = _get_list("liked")
+        disliked = _get_list("disliked")
+        dietary = _get_list("dietary")
+        if merge:
+            flavor_notes = data.get("flavor_notes", current["flavor_notes"])
+        else:
+            flavor_notes = data.get("flavor_notes", "")
 
         ph = self._ph()
         cur = self._conn.cursor()

@@ -88,30 +88,6 @@ def print_result(result: KitchenResult, debug: bool = False):
             f"[/{score_color}]  |  Revisions: {result.iteration_count}[/dim]"
         )
 
-    # Nutrition table
-    if result.nutrition:
-        n = result.nutrition.get("per_serving", {})
-        if n:
-            med_score = result.nutrition.get("mediterranean_score", "")
-            table = Table(
-                title="Nutrition per serving",
-                box=box.SIMPLE,
-                show_header=True,
-                header_style="bold cyan",
-            )
-            for col in ("Calories", "Carbs", "Protein", "Fat", "Sugar", "Fibre", "Med. score"):
-                table.add_column(col)
-            table.add_row(
-                f"{n.get('calories',   '?')} kcal",
-                f"{n.get('carbs_g',    '?')} g",
-                f"{n.get('protein_g',  '?')} g",
-                f"{n.get('fat_g',      '?')} g",
-                f"{n.get('sugar_g',    '?')} g",
-                f"{n.get('fibre_g',    '?')} g",
-                f"{med_score}/10" if med_score else "—",
-            )
-            console.print(table)
-
     # Debug extras
     if debug:
         if result.recommended_recipes:
@@ -281,7 +257,7 @@ def run_interactive(user_id: str, debug: bool):
                 continue
 
             # ── Normal pipeline run ───────────────────────────────────────────
-            console.print("\n[dim]🔄 Chef is Thinking...[/dim]")
+            console.print("\n[dim]🔄 Thinking...[/dim]")
             try:
                 result = orchestrator.run(user_input, max_iterations=3)
 

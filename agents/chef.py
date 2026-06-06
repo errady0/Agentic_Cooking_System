@@ -1,13 +1,17 @@
 """
 agents/chef.py
 
-The Chef agent produces a complete, authentic Moroccan recipe with:
-  - Ingredients (with Moroccan spice names)
+The Chef agent produces a complete recipe with:
+  - Ingredients (with relevant spice names for the cuisine style)
   - Step-by-step instructions
   - Tips on technique and presentation
   - Cultural context
 
-It can optionally scrape a reference recipe from the web for authenticity.
+Behaviour adapts based on state["user_style_choice"]:
+  - "moroccan" (default) → authentic Moroccan recipe, Moroccan spices and technique
+  - "moroccan_twist"     → non-Moroccan dish reimagined with Moroccan flavours/spices
+  - "classic"            → faithful classic recipe of the dish's original cuisine,
+                           NO Moroccan influence added
 """
 
 from __future__ import annotations
@@ -21,48 +25,123 @@ from tools import web_search, web_scrape, get_ingredient_prices
 
 _llm = get_llm(temperature=0.4)
 
-_SYSTEM = """You are a master Moroccan chef with deep knowledge of Moroccan
-culinary traditions.
 
-Dish to prepare: {dish}
-User dietary constraints: {dietary}
-Critic feedback (apply if present): {critic_notes}
-Reference from web (use as inspiration, not verbatim): {web_ref}
+# ── System prompts — one per style ────────────────────────────────────────────
 
-Reply with a JSON object (no markdown) with these keys:
+_SYSTEM_MOROCCAN = """You are a master Moroccan chef with deep knowledge of
+Moroccan culinary traditions.
+
+Dish to prepare      : {dish}
+Dietary constraints  : {dietary}
+Critic feedback      : {critic_notes}
+Web reference        : {web_ref}
+
+Produce an authentic Moroccan recipe. Use traditional Moroccan spice names
+(ras el hanout, chermoula, preserved lemon, argan oil, etc.) where appropriate.
+Include cultural context and Moroccan accompaniments.
+
+Reply with a JSON object (no markdown) with these exact keys:
   "name"         : full dish name (English + Arabic/Darija)
-  "servings"     : number of servings (default 2)
-  "ingredients"  : list of {{item, quantity, notes}} — include Moroccan spice names
-  "steps"        : list of {{step_number, title, instruction, duration_minutes}}
+  "style"        : "moroccan"
+  "servings"     : integer (default 2)
+  "ingredients"  : list of {{"item", "quantity", "notes"}}
+  "steps"        : list of {{"step_number", "title", "instruction", "duration_minutes"}}
   "tips"         : list of 2-3 chef tips
-  "cultural_note": 1-2 sentence story about the dish
-  "pairing"      : suggested Moroccan accompaniments (mint tea, bread, etc.)
+  "cultural_note": 1-2 sentences about the dish's Moroccan heritage
+  "pairing"      : suggested Moroccan accompaniments (mint tea, khobz, etc.)
+"""
+
+_SYSTEM_MOROCCAN_TWIST = """You are a creative Moroccan fusion chef.
+
+Dish to prepare      : {dish}
+Dietary constraints  : {dietary}
+Critic feedback      : {critic_notes}
+Web reference        : {web_ref}
+
+Your task: reimagine this dish with a Moroccan twist.
+Keep the dish's original structure and cooking method, but replace or
+supplement key flavours and spices with Moroccan equivalents:
+  - Use ras el hanout, chermoula, harissa, preserved lemon, argan oil, cumin,
+    coriander, saffron, and similar Moroccan pantry staples where they fit.
+  - Add a "moroccan_adaptations" key that clearly lists every change you made
+    from the classic version, so the user understands what makes it Moroccan.
+
+Reply with a JSON object (no markdown) with these exact keys:
+  "name"                 : dish name + " — Moroccan Twist"
+  "style"                : "moroccan_twist"
+  "servings"             : integer (default 2)
+  "ingredients"          : list of {{"item", "quantity", "notes"}}
+  "steps"                : list of {{"step_number", "title", "instruction", "duration_minutes"}}
+  "tips"                 : list of 2-3 chef tips
+  "cultural_note"        : 1-2 sentences explaining the Moroccan inspiration
+  "moroccan_adaptations" : list of strings — each change vs the classic version
+  "pairing"              : suggested Moroccan accompaniments
+"""
+
+_SYSTEM_CLASSIC = """You are an expert chef specialising in {origin_cuisine} cuisine.
+
+Dish to prepare      : {dish}
+Dietary constraints  : {dietary}
+Critic feedback      : {critic_notes}
+Web reference        : {web_ref}
+
+Produce a faithful, authentic classic recipe for this dish exactly as it is
+traditionally made in its country of origin.
+Do NOT add Moroccan spices, ingredients, or techniques.
+Use the traditional spices, methods, and accompaniments of {origin_cuisine} cuisine.
+
+Reply with a JSON object (no markdown) with these exact keys:
+  "name"         : full dish name (in English + original language if applicable)
+  "style"        : "classic"
+  "origin"       : "{origin_cuisine}"
+  "servings"     : integer (default 2)
+  "ingredients"  : list of {{"item", "quantity", "notes"}}
+  "steps"        : list of {{"step_number", "title", "instruction", "duration_minutes"}}
+  "tips"         : list of 2-3 chef tips
+  "cultural_note": 1-2 sentences about the dish's origin and tradition
+  "pairing"      : traditional accompaniments from the original cuisine
 """
 
 
-def chef_agent(state: KitchenState) -> KitchenState:
-    prefs = state.get("user_preferences", {})
-    recommended = state.get("recommended_recipes", [])
-    critic = state.get("critic_feedback", {})
-    iteration = state.get("iteration", 0)
+# ── Web search query — adapts to style ───────────────────────────────────────
 
-    # Pick the dish: top recommendation, or extract from objective
+def _build_search_query(dish: str, style: str, origin: str) -> str:
+    if style == "classic":
+        return f"authentic traditional {dish} recipe {origin}"
+    elif style == "moroccan_twist":
+        return f"moroccan fusion {dish} recipe spices"
+    else:
+        return f"authentic moroccan {dish} recipe"
+
+
+# ── Main agent ────────────────────────────────────────────────────────────────
+
+def chef_agent(state: KitchenState) -> KitchenState:
+    prefs        = state.get("user_preferences", {})
+    recommended  = state.get("recommended_recipes", [])
+    critic       = state.get("critic_feedback", {})
+    iteration    = state.get("iteration", 0)
+    style        = state.get("user_style_choice", "moroccan") or "moroccan"
+    dish_origin  = state.get("dish_origin", "") or ""
+
+    # ── Pick the dish ─────────────────────────────────────────────────────────
     if recommended:
         dish = recommended[0].get("name", state["objective"])
     else:
-        dish = state.get("objective", state["user_input"])
+        dish = state.get("dish_hint") or state.get("objective") or state["user_input"]
 
-    # Get critic notes for revision iterations
+    # ── Critic notes (only on revision passes) ────────────────────────────────
     critic_notes = ""
     if iteration > 0 and critic:
-        issues = critic.get("issues", [])
+        issues      = critic.get("issues", [])
         suggestions = critic.get("suggestions", [])
         critic_notes = f"Issues: {issues}. Suggestions: {suggestions}"
 
-    # Try to get a web reference for the selected dish
+    # ── Web reference — search query is style-aware ───────────────────────────
     web_ref = ""
     try:
-        search_result = web_search.invoke(f"authentic moroccan {dish} recipe")
+        query = _build_search_query(dish, style, dish_origin)
+        search_result = web_search.invoke(query)
         items = json.loads(search_result)
         if items and items[0].get("url"):
             scraped = web_scrape.invoke(items[0]["url"])
@@ -72,17 +151,38 @@ def chef_agent(state: KitchenState) -> KitchenState:
     except Exception:
         web_ref = "Not available"
 
-    messages = [
-        SystemMessage(content=_SYSTEM.format(
-            dish=dish,
-            dietary=", ".join(prefs.get("dietary", [])) or "none",
-            critic_notes=critic_notes or "none",
-            web_ref=web_ref,
-        )),
-        HumanMessage(content=f"Prepare the full recipe for: {dish}"),
-    ]
+    # ── Build the right system prompt ─────────────────────────────────────────
+    dietary = ", ".join(prefs.get("dietary", [])) or "none"
 
-    resp = _llm.invoke(messages)
+    if style == "classic":
+        origin_cuisine = dish_origin or "international"
+        system_prompt = _SYSTEM_CLASSIC.format(
+            dish           = dish,
+            dietary        = dietary,
+            critic_notes   = critic_notes or "none",
+            web_ref        = web_ref,
+            origin_cuisine = origin_cuisine,
+        )
+    elif style == "moroccan_twist":
+        system_prompt = _SYSTEM_MOROCCAN_TWIST.format(
+            dish         = dish,
+            dietary      = dietary,
+            critic_notes = critic_notes or "none",
+            web_ref      = web_ref,
+        )
+    else:   # "moroccan" — default for all Moroccan requests
+        system_prompt = _SYSTEM_MOROCCAN.format(
+            dish         = dish,
+            dietary      = dietary,
+            critic_notes = critic_notes or "none",
+            web_ref      = web_ref,
+        )
+
+    # ── Invoke LLM ────────────────────────────────────────────────────────────
+    resp = _llm.invoke([
+        SystemMessage(content=system_prompt),
+        HumanMessage(content=f"Prepare the full recipe for: {dish}"),
+    ])
     text = resp.content.strip()
 
     if text.startswith("```"):
@@ -95,16 +195,18 @@ def chef_agent(state: KitchenState) -> KitchenState:
         recipe = json.loads(text)
     except json.JSONDecodeError:
         recipe = {
-            "name": dish,
+            "name"    : dish,
+            "style"   : style,
             "servings": 2,
             "ingredients": [],
-            "steps": [{"step_number": 1, "title": "Prepare", "instruction": text[:500], "duration_minutes": 60}],
-            "tips": [],
+            "steps"   : [{"step_number": 1, "title": "Prepare",
+                          "instruction": text[:500], "duration_minutes": 60}],
+            "tips"    : [],
             "cultural_note": "",
-            "pairing": "Moroccan mint tea",
+            "pairing" : "",
         }
 
-    # ── Price lookup ──────────────────────────────────────────────────
+    # ── Price lookup ──────────────────────────────────────────────────────────
     try:
         ingredient_names = [
             ing.get("item", ing.get("name", ""))
@@ -113,8 +215,8 @@ def chef_agent(state: KitchenState) -> KitchenState:
         ]
         if ingredient_names:
             raw_prices = get_ingredient_prices.invoke({"ingredients": ingredient_names})
-            prices = json.loads(raw_prices)["prices"] 
-            total = 0.0
+            prices     = json.loads(raw_prices)["prices"]
+            total      = 0.0
             for ing in recipe.get("ingredients", []):
                 if isinstance(ing, dict):
                     name = ing.get("item", ing.get("name", ""))
@@ -122,15 +224,13 @@ def chef_agent(state: KitchenState) -> KitchenState:
                         ing["price"] = prices[name]
                         total += prices[name].get("price_mad", 0)
             recipe["total_price"] = {"amount": round(total, 2), "currency": "MAD"}
-
+            
     except Exception:
         pass
 
     return {
         **state,
         "current_recipe": recipe,
-        "next_agent": "nutrition",
-        "messages": [
-            AIMessage(content=f"[Chef] Recipe ready: {recipe.get('name', dish)}")
-        ],
+        "next_agent"    : "nutrition",
+        "messages"      : [AIMessage(content=f"[Chef] Recipe ready: {recipe.get('name', dish)} ({style})")],
     }

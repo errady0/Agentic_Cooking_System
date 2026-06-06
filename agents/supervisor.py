@@ -43,6 +43,13 @@ INTENTS:
                           thanks, compliments, small talk — including talking about themselves
 - out_of_scope          → completely unrelated to food (coding, news, math, system commands, etc.)
 
+MEAL PLANNING rules — apply FIRST, before any other rule:
+- "plan for the week", "weekly plan", "meal plan", "what should I eat this week",
+  "plan my meals", "weekly menu", "shopping list", "what to cook this week",
+  "give me ideas for the week", and any similar planning/scheduling request
+  → ALWAYS culinary (need_recommendation: true), never out_of_scope.
+- In the context of a kitchen assistant, an unqualified "plan" means a MEAL plan.
+
 IMPORTANT chitchat rules:
 - If the user shares personal information (name, age, where they live, how they feel),
   that is ALWAYS chitchat, never out_of_scope.
@@ -107,8 +114,8 @@ Inform them warmly that this dish originates from {dish_origin} and is not Moroc
 but you can still help them prepare it.
 Offer them TWO clear options and ask them to choose:
 
-  => Classic {dish_hint} — the traditional {dish_origin} way
-  => Moroccan Twist — a {dish_hint} inspired by Moroccan spices and flavours
+-> Classic {dish_hint} — the traditional {dish_origin} way
+-> Moroccan Twist — a {dish_hint} inspired by Moroccan spices and flavours
 
 Be warm, enthusiastic, and brief. Respond in the user's language.
 Do NOT cook the dish yet — just present the choice."""
@@ -141,13 +148,15 @@ You have:
   - Full recipe         : {recipe}
   - Nutrition analysis  : {nutrition}
   - Critic feedback     : {critic}
+  - Critic score        : {critic_score}/10  ← use this exact number if you mention quality
   - Style chosen        : {style}   (classic | moroccan_twist | moroccan)
 
 Write the final answer. Include the recipe with steps, nutritional info,
 and personalised notes. If pricing data is available, include an estimated
 ingredient cost in MAD (mention it's a market estimate).
 If style is "moroccan_twist", highlight the Moroccan adaptations clearly.
-Be conversational and friendly. If the critic flagged issues, address them naturally."""
+Be conversational and friendly. If the critic flagged issues, address them naturally.
+When mentioning quality or score, always reference the exact critic_score value above."""
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -177,6 +186,9 @@ def _get_user_name(state: KitchenState) -> str:
 # ── Step 1: classify ──────────────────────────────────────────────────────────
 def supervisor_classify(state: KitchenState) -> KitchenState:
     """Classify intent. Also extracts personal facts for chitchat memory."""
+    if state.get("user_style_choice") in ("classic", "moroccan_twist"):
+        return state
+
     resp = _llm.invoke([
         SystemMessage(content=_SYSTEM_CLASSIFY),
         HumanMessage(content=state["user_input"]),
@@ -401,13 +413,16 @@ def supervisor_review(state: KitchenState) -> KitchenState:
     recommended = state.get("recommended_recipes", [])
     style       = state.get("user_style_choice", "moroccan")
 
+    critic_score = critic.get("score", "N/A") if critic else "N/A"
+
     resp = _llm.invoke([
         SystemMessage(content=_SYSTEM_FINAL.format(
-            recommended=json.dumps(recommended[:3], ensure_ascii=False),
-            recipe     =json.dumps(recipe,     ensure_ascii=False) if recipe    else "none",
-            nutrition  =json.dumps(nutrition,  ensure_ascii=False) if nutrition else "none",
-            critic     =json.dumps(critic,     ensure_ascii=False) if critic    else "none",
-            style      =style,
+            recommended =json.dumps(recommended[:3], ensure_ascii=False),
+            recipe      =json.dumps(recipe,     ensure_ascii=False) if recipe    else "none",
+            nutrition   =json.dumps(nutrition,  ensure_ascii=False) if nutrition else "none",
+            critic      =json.dumps(critic,     ensure_ascii=False) if critic    else "none",
+            critic_score=critic_score,
+            style       =style,
         )),
         HumanMessage(content=f"User asked: {state['user_input']}"),
     ])
