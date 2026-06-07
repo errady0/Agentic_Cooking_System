@@ -69,8 +69,8 @@ def _parse_style_choice(user_text: str) -> str:
     for kw in classic_keywords:
         if kw in t:
             return "classic"
-    # Default: if unclear, go classic
-    return "classic"
+    # Default: if unclear, return None so the orchestrator can break out
+    return None
 
 
 # ── Result dataclass ──────────────────────────────────────────────────────────
@@ -176,12 +176,17 @@ class KitchenOrchestrator:
             return self.run(user_reply)
 
         style = _parse_style_choice(user_reply)
+        if style is None:
+            # Not a style choice — break out of the clarification loop
+            self._pending_state = None
+            return self.run(user_reply)
+
         pending = self._pending_state
 
         # Build continuation state
         continuation: KitchenState = {
             **pending,
-            "user_input"       : user_reply,
+            "user_input"       : f"{pending.get('user_input', '')} (Style chosen: {user_reply})",
             "user_style_choice": style,
             "messages"         : [HumanMessage(content=user_reply)],
             "final_response"   : "",      # clear the clarification question

@@ -83,6 +83,22 @@ CREATE TABLE IF NOT EXISTS conversation_summaries (
     created_at  TEXT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS sessions (
+    session_id  TEXT PRIMARY KEY,
+    user_id     TEXT NOT NULL,
+    title       TEXT NOT NULL,
+    created_at  TEXT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS session_messages (
+    id          INTEGER PRIMARY KEY {autoincrement},
+    session_id  TEXT NOT NULL,
+    message_json TEXT NOT NULL,
+    created_at  TEXT NOT NULL,
+    FOREIGN KEY (session_id) REFERENCES sessions(session_id) ON DELETE CASCADE
+);
 """
 
 def _bootstrap(conn):
@@ -248,6 +264,68 @@ class LongTermMemory:
                 self._now(),
                 self.user_id,
             ),
+        )
+        self._conn.commit()
+        cur.close()
+
+    # ── Sessions ──────────────────────────────────────────────────────────────
+
+    def get_sessions(self) -> list[dict]:
+        ph = self._ph()
+        cur = self._conn.cursor()
+        cur.execute(
+            f"SELECT session_id, title, created_at FROM sessions WHERE user_id = {ph} ORDER BY created_at DESC",
+            (self.user_id,)
+        )
+        rows = cur.fetchall()
+        cur.close()
+        return [{"session_id": r[0], "title": r[1], "created_at": r[2]} for r in rows]
+
+    def get_session_messages(self, session_id: str) -> list[dict]:
+        ph = self._ph()
+        cur = self._conn.cursor()
+        cur.execute(
+            f"SELECT message_json FROM session_messages WHERE session_id = {ph} ORDER BY id ASC",
+            (session_id,)
+        )
+        rows = cur.fetchall()
+        cur.close()
+        return [json.loads(r[0]) for r in rows]
+
+    def save_session(self, session_id: str, title: str):
+        ph = self._ph()
+        cur = self._conn.cursor()
+        try:
+            cur.execute(
+                f"INSERT INTO sessions (session_id, user_id, title, created_at) VALUES ({ph},{ph},{ph},{ph})",
+                (session_id, self.user_id, title, self._now())
+            )
+            self._conn.commit()
+        except sqlite3.IntegrityError:
+            self._conn.rollback()
+            cur.execute(
+                f"UPDATE sessions SET title = {ph} WHERE session_id = {ph} AND user_id = {ph}",
+                (title, session_id, self.user_id)
+            )
+            self._conn.commit()
+        cur.close()
+
+    def save_message(self, session_id: str, msg: dict):
+        ph = self._ph()
+        cur = self._conn.cursor()
+        cur.execute(
+            f"INSERT INTO session_messages (session_id, message_json, created_at) VALUES ({ph},{ph},{ph})",
+            (session_id, json.dumps(msg, ensure_ascii=False), self._now())
+        )
+        self._conn.commit()
+        cur.close()
+
+    def delete_session(self, session_id: str):
+        ph = self._ph()
+        cur = self._conn.cursor()
+        cur.execute(
+            f"DELETE FROM sessions WHERE session_id = {ph} AND user_id = {ph}",
+            (session_id, self.user_id)
         )
         self._conn.commit()
         cur.close()

@@ -1,0 +1,23 @@
+/* frontend/src/index.css */
+:root {
+  --bg: #f9f5eb;               /* Warm Almond Main Canvas */
+  --surface: #231914;          /* Deep Charcoal Brown Sidebar Background */
+  --surface-chat: #ffffff;     /* Pure White Base for message cards if needed */
+  --border: #dfd3c3;           /* Cream/Clay subtle border dividing lines */
+  --border-dark: #3a2b23;      /* Sidebar internal separators */
+  --text: #1a120b;             /* Espresso Black Typography */
+  --text-light: #f9f5eb;       /* Off-White text on dark components */
+  --text-muted: #7c6853;       /* Muted Olive-Brown text */
+  --text-muted-dark: #a9927d;  /* Muted text inside dark components */
+  --accent: #c86832;           /* Vibrant Harissa Orange active items */
+  --accent-hover: #b05423;     
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+}
