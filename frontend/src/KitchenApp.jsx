@@ -185,6 +185,7 @@ const IcX = () => <Ic d="M18 6L6 18M6 6l12 12" />;
 const IcHeart = ({ f }) => <Ic d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill={f ? "currentColor" : "none"} />;
 const IcChevron = () => <Ic d="M6 9l6 6 6-6" />;
 const IcLogout = () => <Ic d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />;
+const IcStop = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2" /></svg>;
 const IcLoader = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
     <path d="M21 12a9 9 0 1 1-6.219-8.56" />
@@ -714,7 +715,12 @@ const SUGGESTIONS = [
 export default function KitchenApp() {
   injectTheme();
 
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem("kitchen_user");
+      return saved ? JSON.parse(saved) : null;
+    } catch { return null; }
+  });
   const [sessions, setSessions] = useState([]);
   const [activeSession, setActiveSession] = useState(null);
   const [messages, setMessages] = useState({});
@@ -726,6 +732,7 @@ export default function KitchenApp() {
 
   const bottomRef = useRef(null);
   const taRef = useRef(null);
+  const abortControllerRef = useRef(null);
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, activeSession]);
   useEffect(() => { taRef.current?.focus(); }, [activeSession]);
@@ -738,7 +745,37 @@ export default function KitchenApp() {
         setPrefs(prefsData);
       } catch (e) {
         console.error("Failed to load preferences:", e);
-      } finally {
+      }
+
+      // Fetch saved sessions from backend
+      try {
+        const sessData = await apiFetch(`/api/sessions/${user.userId}`);
+        if (sessData.sessions && sessData.sessions.length > 0) {
+          setSessions(sessData.sessions.map(s => ({ session_id: s.session_id, title: s.title, created_at: s.created_at })));
+          const msgs = {};
+          sessData.sessions.forEach(s => {
+            msgs[s.session_id] = (s.messages || []).map(m => {
+              if (m.role === "assistant") {
+                return {
+                  ...m,
+                  id: m.id || crypto.randomUUID(),
+                  content: m.content || m.final_response || "No response.",
+                  recommendedRecipes: m.recommendedRecipes || m.recommended_recipes || [],
+                  criticScore: m.criticScore ?? m.critic_score ?? null,
+                  iterationCount: m.iterationCount ?? m.iteration_count ?? null,
+                  styleChoice: m.styleChoice ?? m.style_choice ?? "",
+                };
+              }
+              return { ...m, id: m.id || crypto.randomUUID() };
+            });
+          });
+          setMessages(msgs);
+          setActiveSession(sessData.sessions[0].session_id);
+        } else {
+          createNewSession();
+        }
+      } catch (e) {
+        console.error("Failed to load sessions:", e);
         createNewSession();
       }
     })();
@@ -753,8 +790,13 @@ export default function KitchenApp() {
     return id;
   };
 
-  const deleteSession = (id, e) => {
+  const deleteSession = async (id, e) => {
     e.stopPropagation();
+    try {
+      await apiFetch(`/api/sessions/${user.userId}/${id}`, { method: "DELETE" });
+    } catch (err) {
+      console.error("Failed to delete session from backend:", err);
+    }
     setSessions(prev => {
       const next = prev.filter(s => s.session_id !== id);
       if (activeSession === id) {
@@ -785,11 +827,13 @@ export default function KitchenApp() {
     const thinkMsg = { role: "assistant", content: "", thinking: true, id: crypto.randomUUID() };
     setMessages(prev => ({ ...prev, [sessId]: [...(prev[sessId] || []), thinkMsg] }));
     setLoading(true);
+    abortControllerRef.current = new AbortController();
 
     try {
       const data = await apiFetch("/api/chat", {
         method: "POST",
         body: JSON.stringify({ user_id: user.userId, session_id: sessId, message: content }),
+        signal: abortControllerRef.current.signal
       });
 
       const aiMsg = {
@@ -816,17 +860,39 @@ export default function KitchenApp() {
       }
 
     } catch (e) {
-      setMessages(prev => {
-        const arr = [...(prev[sessId] || [])];
-        arr[arr.length - 1] = { role: "assistant", content: `System Error: ${e.message}`, id: crypto.randomUUID() };
-        return { ...prev, [sessId]: arr };
-      });
+      if (e.name === "AbortError") {
+        setMessages(prev => {
+          const arr = [...(prev[sessId] || [])];
+          // remove thinking msg
+          const filtered = arr.filter(m => !m.thinking);
+          return { ...prev, [sessId]: [...filtered, { role: "assistant", content: "*Process stopped by user.*", id: crypto.randomUUID() }]};
+        });
+      } else {
+        setMessages(prev => {
+          const arr = [...(prev[sessId] || [])];
+          arr[arr.length - 1] = { role: "assistant", content: `System Error: ${e.message}`, id: crypto.randomUUID() };
+          return { ...prev, [sessId]: arr };
+        });
+      }
     } finally {
       setLoading(false);
+      abortControllerRef.current = null;
     }
   }, [input, loading, activeSession, user]);
 
-  if (!user) return <AuthScreen onAuth={u => { setUser(u); }} />;
+  const handleAuth = (u) => {
+    localStorage.setItem("kitchen_user", JSON.stringify(u));
+    setUser(u);
+  };
+
+  const handleSignOut = () => {
+    localStorage.removeItem("kitchen_user");
+    setUser(null);
+    setSessions([]);
+    setMessages({});
+  };
+
+  if (!user) return <AuthScreen onAuth={handleAuth} />;
 
   const currentMsgs = messages[activeSession] || [];
 
@@ -919,7 +985,7 @@ export default function KitchenApp() {
             <div style={{ display: "flex", gap: 8 }}>
               {[
                 { label: "Preferences", action: () => setShowPrefs(true) },
-                { label: "Sign out", action: () => { setUser(null); setSessions([]); setMessages({}); }, icon: <IcLogout /> },
+                { label: "Sign out", action: handleSignOut, icon: <IcLogout /> },
               ].map(({ label, action, icon }) => (
                 <button key={label} onClick={action} style={{
                   flex: 1, padding: "8px", background: "rgba(255,255,255,0.05)", border: "1px solid var(--border-glass)",
@@ -1018,16 +1084,31 @@ export default function KitchenApp() {
                 padding: "4px 4px 4px 8px"
               }}
             />
-            <button onClick={() => sendMessage()} disabled={!input.trim() || loading} style={{
-              width: 44, height: 44, borderRadius: 14, flexShrink: 0, border: "none",
-              background: input.trim() && !loading ? "var(--accent)" : "rgba(255,255,255,0.05)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              color: input.trim() && !loading ? "#fff" : "var(--text-muted)",
-              cursor: input.trim() && !loading ? "pointer" : "not-allowed", transition: "all .2s cubic-bezier(0.16, 1, 0.3, 1)",
-              boxShadow: input.trim() && !loading ? "0 4px 12px var(--accent-glow)" : "none"
-            }}>
-              {loading ? <span className="spin"><IcLoader /></span> : <IcSend />}
-            </button>
+            <div style={{ display: "flex", gap: 8 }}>
+              {loading && (
+                <button onClick={() => {
+                  if (abortControllerRef.current) {
+                    abortControllerRef.current.abort();
+                  }
+                }} style={{
+                  width: 44, height: 44, borderRadius: 14, flexShrink: 0, border: "none",
+                  background: "rgba(201, 64, 64, 0.1)", color: "var(--red)", cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center", transition: "all .2s"
+                }}>
+                  <IcStop />
+                </button>
+              )}
+              <button onClick={() => sendMessage()} disabled={!input.trim() || loading} style={{
+                width: 44, height: 44, borderRadius: 14, flexShrink: 0, border: "none",
+                background: input.trim() && !loading ? "var(--accent)" : "rgba(255,255,255,0.05)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                color: input.trim() && !loading ? "#fff" : "var(--text-muted)",
+                cursor: input.trim() && !loading ? "pointer" : "not-allowed", transition: "all .2s cubic-bezier(0.16, 1, 0.3, 1)",
+                boxShadow: input.trim() && !loading ? "0 4px 12px var(--accent-glow)" : "none"
+              }}>
+                {loading ? <span className="spin"><IcLoader /></span> : <IcSend />}
+              </button>
+            </div>
           </div>
           <p style={{ fontSize: 12, color: "var(--text-hint)", textAlign: "center", marginTop: 12, fontWeight: 500 }}>
             Enter to send · Shift+Enter for new line

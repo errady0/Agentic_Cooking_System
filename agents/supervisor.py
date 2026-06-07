@@ -151,7 +151,8 @@ You have:
   - Critic score        : {critic_score}/10  ← use this exact number if you mention quality
   - Style chosen        : {style}   (classic | moroccan_twist | moroccan)
 
-Write the final answer. Include the recipe with steps, nutritional info,
+If 'Full recipe' is 'none', your ONLY task is to gracefully present the 'Recommended recipes' to the user, highlighting why they match their preferences, and invite them to choose one.
+Otherwise, write the final answer. Include the recipe with steps, nutritional info,
 and personalised notes. If pricing data is available, include an estimated
 ingredient cost in MAD (mention it's a market estimate).
 If style is "moroccan_twist", highlight the Moroccan adaptations clearly.
@@ -187,7 +188,7 @@ def _get_user_name(state: KitchenState) -> str:
 def supervisor_classify(state: KitchenState) -> KitchenState:
     """Classify intent. Also extracts personal facts for chitchat memory."""
     if state.get("user_style_choice") in ("classic", "moroccan_twist"):
-        return state
+        return {}
 
     resp = _llm.invoke([
         SystemMessage(content=_SYSTEM_CLASSIFY),
@@ -346,9 +347,7 @@ def supervisor_clarify(state: KitchenState) -> KitchenState:
     if style_choice in ("classic", "moroccan_twist"):
         classified = state.get("classified", {})
 
-        if classified.get("need_recommendation"):
-            next_agent = "recommendation"
-        elif classified.get("need_recipe", True):
+        if classified.get("need_recipe", True):
             next_agent = "chef"
         else:
             next_agent = "nutrition"

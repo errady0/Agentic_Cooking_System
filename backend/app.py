@@ -6,7 +6,7 @@ from typing import Optional
 import uuid, bcrypt
 
 from orchestrator import KitchenOrchestrator
-from memory.long_term import LongTermMemory, _get_connection, _bootstrap
+from memory.long_term import LongTermMemory, _get_connection, _bootstrap, _placeholder
 
 app = FastAPI()
 
@@ -47,16 +47,16 @@ def get_db():
 @app.post("/api/auth/register")
 def register(req: AuthRequest):
     conn = get_db()
-    ph = "?" 
+    ph = _placeholder(conn)
     cur = conn.cursor()
-    cur.execute("SELECT user_id FROM users WHERE username = ?", (req.username,))
+    cur.execute(f"SELECT user_id FROM users WHERE username = {ph}", (req.username,))
     if cur.fetchone():
         raise HTTPException(status_code=400, detail="Username already exists")
     user_id = str(uuid.uuid4())
     hashed = bcrypt.hashpw(req.password.encode(), bcrypt.gensalt()).decode()
     from datetime import datetime, timezone
     cur.execute(
-        "INSERT INTO users (user_id, username, password, created) VALUES (?,?,?,?)",
+        f"INSERT INTO users (user_id, username, password, created) VALUES ({ph},{ph},{ph},{ph})",
         (user_id, req.username, hashed, datetime.now(timezone.utc).isoformat())
     )
     conn.commit()
@@ -68,8 +68,9 @@ def register(req: AuthRequest):
 @app.post("/api/auth/login")
 def login(req: AuthRequest):
     conn = get_db()
+    ph = _placeholder(conn)
     cur = conn.cursor()
-    cur.execute("SELECT user_id, password FROM users WHERE username = ?", (req.username,))
+    cur.execute(f"SELECT user_id, password FROM users WHERE username = {ph}", (req.username,))
     row = cur.fetchone()
     if not row:
         raise HTTPException(status_code=401, detail="Invalid username or password")

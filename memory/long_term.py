@@ -301,7 +301,8 @@ class LongTermMemory:
                 (session_id, self.user_id, title, self._now())
             )
             self._conn.commit()
-        except sqlite3.IntegrityError:
+        except Exception:
+            # Session already exists — just update the title if it's a new/better title
             self._conn.rollback()
             cur.execute(
                 f"UPDATE sessions SET title = {ph} WHERE session_id = {ph} AND user_id = {ph}",
@@ -323,6 +324,11 @@ class LongTermMemory:
     def delete_session(self, session_id: str):
         ph = self._ph()
         cur = self._conn.cursor()
+        # Explicitly delete messages first (CASCADE may not fire in SQLite without PRAGMA)
+        cur.execute(
+            f"DELETE FROM session_messages WHERE session_id = {ph}",
+            (session_id,)
+        )
         cur.execute(
             f"DELETE FROM sessions WHERE session_id = {ph} AND user_id = {ph}",
             (session_id, self.user_id)

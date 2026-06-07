@@ -89,7 +89,7 @@ def recommendation_agent(state: KitchenState) -> KitchenState:
     return {
         **state,
         "recommended_recipes": recipes,
-        "next_agent": "chef",
+        "next_agent": "supervisor_review",
         "messages": [
             AIMessage(content=f"[Recommendation] Suggested: {', '.join(r.get('name','') for r in recipes)}")
         ],

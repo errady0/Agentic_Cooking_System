@@ -43,7 +43,9 @@ The graph re-enters at supervisor_classify → supervisor_entry → supervisor_c
 from __future__ import annotations
 
 from langgraph.graph import StateGraph, END
-from langgraph.checkpoint.memory import MemorySaver
+import sqlite3
+from langgraph.checkpoint.sqlite import SqliteSaver
+from config import settings
 
 from agents.state import KitchenState
 from agents.supervisor import (
@@ -104,7 +106,7 @@ def route_after_review(state: KitchenState) -> str:
 
 # ── Build the graph ───────────────────────────────────────────────────────────
 
-def build_graph(use_checkpointing: bool = True) -> StateGraph:
+def build_graph(use_checkpointing: bool = True, checkpointer=None) -> StateGraph:
     builder = StateGraph(KitchenState)
 
     # ── Nodes ─────────────────────────────────────────────────────────────────
@@ -151,8 +153,22 @@ def build_graph(use_checkpointing: bool = True) -> StateGraph:
         },
     )
 
-    # ── Linear pipeline ───────────────────────────────────────────────────────
-    builder.add_edge("recommendation", "chef")
+    # ── Pipeline routing ──────────────────────────────────────────────────────
+    def route_after_rec(state: KitchenState) -> str:
+        na = state.get("next_agent", "END")
+        if na in {"chef", "supervisor_review", "END"}:
+            return na
+        return "END"
+
+    builder.add_conditional_edges(
+        "recommendation",
+        route_after_rec,
+        {
+            "chef": "chef",
+            "supervisor_review": "supervisor_review",
+            "END": END,
+        }
+    )
     builder.add_edge("chef",           "nutrition")
     builder.add_edge("nutrition",      "critic")
     builder.add_edge("critic",         "supervisor_review")
@@ -167,18 +183,36 @@ def build_graph(use_checkpointing: bool = True) -> StateGraph:
         },
     )
 
-    if use_checkpointing:
-        memory = MemorySaver()
-        return builder.compile(checkpointer=memory)
+    if use_checkpointing and checkpointer:
+        return builder.compile(checkpointer=checkpointer)
     return builder.compile()
-
 
 # ── Singleton ─────────────────────────────────────────────────────────────────
 
 _graph = None
+_conn = None
+
+def _make_checkpointer():
+    """Create a LangGraph checkpointer that matches the DB config in settings."""
+    global _conn
+    if settings.USE_SQLITE_FALLBACK or not settings.DATABASE_URL:
+        _conn = sqlite3.connect(settings.SQLITE_PATH, check_same_thread=False)
+        return SqliteSaver(_conn)
+    # PostgreSQL path
+    try:
+        from langgraph.checkpoint.postgres import PostgresSaver
+        return PostgresSaver.from_conn_string(settings.DATABASE_URL)
+    except ImportError:
+        # langgraph-checkpoint-postgres not installed — fall back to SQLite
+        _conn = sqlite3.connect(settings.SQLITE_PATH, check_same_thread=False)
+        return SqliteSaver(_conn)
 
 def get_graph(use_checkpointing: bool = True):
     global _graph
     if _graph is None:
-        _graph = build_graph(use_checkpointing)
+        if use_checkpointing:
+            memory = _make_checkpointer()
+            _graph = build_graph(use_checkpointing, checkpointer=memory)
+        else:
+            _graph = build_graph(False)
     return _graph
