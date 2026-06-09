@@ -141,12 +141,13 @@ Cooking_System/
 git clone <repo-url> Cooking_System
 cd Cooking_System
 
-python -m venv venv
-source venv/bin/activate          # Linux / macOS
-# .\venv\Scripts\activate.bat     # Windows cmd
+python3 -m venv venv               # Create virtual environment (python 3.12 is recommended)
+source venv/bin/activate           # Linux / macOS
+# .\venv\Scripts\activate.bat      # Windows cmd
+# .\.venv\Scripts\Activate.ps1     # Windows PowerShell
 ```
 
-### 2. Install dependencies
+### 2. Install dependencies 
 
 ```bash
 pip install -r requirements.txt
