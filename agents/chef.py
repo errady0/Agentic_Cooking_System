@@ -41,7 +41,7 @@ Produce an authentic Moroccan recipe. Use traditional Moroccan spice names
 Include cultural context and Moroccan accompaniments.
 
 Reply with a JSON object (no markdown) with these exact keys:
-  "name"         : full dish name (English + Arabic/Darija)
+  "name"         : full dish name (user_language + Arabic/Darija)
   "style"        : "moroccan"
   "servings"     : integer (default 2)
   "ingredients"  : list of {{"item", "quantity", "notes"}}
@@ -91,7 +91,7 @@ Do NOT add Moroccan spices, ingredients, or techniques.
 Use the traditional spices, methods, and accompaniments of {origin_cuisine} cuisine.
 
 Reply with a JSON object (no markdown) with these exact keys:
-  "name"         : full dish name (in English + original language if applicable)
+  "name"         : full dish name (in user_language + original language if applicable)
   "style"        : "classic"
   "origin"       : "{origin_cuisine}"
   "servings"     : integer (default 2)
@@ -208,6 +208,53 @@ def chef_agent(state: KitchenState) -> KitchenState:
 
     # ── Price lookup ──────────────────────────────────────────────────────────
     try:
+        import re
+        def calc_price(ing_dict, price_info):
+            base_price = price_info.get("price_mad", 0)
+            if not base_price: return 0
+            
+            qty_str = str(ing_dict.get("quantity", ing_dict.get("amount", "1")))
+            p_unit = price_info.get("unit", "kg").lower()
+            
+            match = re.search(r'(\d+(?:\.\d+)?)', qty_str)
+            if not match: return base_price * 0.1
+            val = float(match.group(1))
+            
+            qty_lower = qty_str.lower()
+            
+            if p_unit == "kg":
+                if 'mg' in qty_lower:
+                    return base_price * (val / 1000000.0)
+                elif 'g' in qty_lower and 'kg' not in qty_lower:
+                    return base_price * (val / 1000.0)
+                elif 'kg' in qty_lower or 'kilo' in qty_lower:
+                    return base_price * val
+                elif 'tbsp' in qty_lower or 'tablespoon' in qty_lower:
+                    return base_price * (val * 0.015)
+                elif 'tsp' in qty_lower or 'teaspoon' in qty_lower:
+                    return base_price * (val * 0.005)
+                elif 'cup' in qty_lower:
+                    return base_price * (val * 0.25)
+                elif 'pinch' in qty_lower:
+                    return base_price * 0.001
+                else:
+                    if val < 20 and not any(u in qty_lower for u in ['g', 'kg', 'l', 'ml']):
+                        return base_price * (val * 0.1)
+                    return base_price * val
+            elif p_unit in ["litre", "liter", "l"]:
+                if 'ml' in qty_lower:
+                    return base_price * (val / 1000.0)
+                elif 'l' in qty_lower.split() or 'liter' in qty_lower or 'litre' in qty_lower:
+                    return base_price * val
+                elif 'cup' in qty_lower:
+                    return base_price * (val * 0.25)
+                elif 'tbsp' in qty_lower:
+                    return base_price * (val * 0.015)
+                else:
+                    return base_price * val
+            else:
+                return base_price * val
+
         ingredient_names = [
             ing.get("item", ing.get("name", ""))
             for ing in recipe.get("ingredients", [])
@@ -219,13 +266,23 @@ def chef_agent(state: KitchenState) -> KitchenState:
             total      = 0.0
             for ing in recipe.get("ingredients", []):
                 if isinstance(ing, dict):
+                    # Strip out any hallucinated price properties
+                    for k in ["price", "total_price", "cost", "price_mad"]:
+                        if k in ing:
+                            del ing[k]
+
                     name = ing.get("item", ing.get("name", ""))
                     if name in prices:
-                        ing["price"] = prices[name]
-                        total += prices[name].get("price_mad", 0)
+                        p_info = prices[name]
+                        calculated = calc_price(ing, p_info)
+                        ing["calculated_price"] = round(calculated, 2)
+                        ing["price_info"] = p_info
+                        total += calculated
+            
             recipe["total_price"] = {"amount": round(total, 2), "currency": "MAD"}
             
-    except Exception:
+    except Exception as e:
+        print(f"Price calculation error: {e}")
         pass
 
     return {

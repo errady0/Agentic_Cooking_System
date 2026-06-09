@@ -327,8 +327,8 @@ function PrefsPanel({ userId, prefs, onSaved, onClose }) {
       display: "flex", alignItems: "center", justifyContent: "center",
     }}>
       <div className="card fade-up" style={{
-        width: 500, maxHeight: "85vh", overflowY: "auto",
-        borderRadius: 24, padding: "36px 40px",
+        width: 500, maxHeight: "85vh", overflowY: "auto", background: "#ffffff",
+        borderRadius: 24, padding: "36px 40px", boxShadow: "0 10px 40px rgba(0,0,0,0.15)"
       }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 32 }}>
           <h2 style={{ fontFamily: "'Playfair Display',Georgia,serif", fontSize: 26, color: "var(--text-main)", fontWeight: 600 }}>Dietary Profile</h2>
@@ -423,140 +423,139 @@ function RecipeCard({ recipe }) {
     color: "var(--accent)", display: "block", marginBottom: 10,
     fontSize: 12, textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 700,
   };
-
   return (
-    <div style={{ marginTop: 16, background: "rgba(0,0,0,0.2)", borderRadius: 16, border: "1px solid var(--border-strong)", overflow: "hidden", transition: "all 0.3s" }}>
-      <button onClick={() => setOpen(!open)} style={{
-        width: "100%", padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between",
-        background: open ? "rgba(205, 108, 50, 0.05)" : "transparent", border: "none", cursor: "pointer",
-        color: "var(--text-main)", fontFamily: "inherit", fontSize: 15, fontWeight: 600, transition: "background 0.2s"
-      }} onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"} onMouseLeave={e => e.currentTarget.style.background = open ? "rgba(255,255,255,0.03)" : "transparent"}>
-        <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{ fontSize: 18 }}>📋</span> {recipe.name || recipe.title || "Recipe Overview"}
-          {recipe.servings && <span style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 400 }}>· {recipe.servings} servings</span>}
-        </span>
-        <span style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform .3s cubic-bezier(0.16, 1, 0.3, 1)", display: "flex", color: "var(--accent)" }}><IcChevron /></span>
-      </button>
+    <div style={{ marginTop: 16, background: "var(--surface-card)", borderRadius: 16, border: "1px solid var(--border-strong)", overflow: "hidden", transition: "all 0.3s", boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
+        <button onClick={() => setOpen(!open)} style={{
+          width: "100%", padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between",
+          background: open ? "rgba(205, 108, 50, 0.05)" : "transparent", border: "none", cursor: "pointer",
+          color: "var(--text-main)", fontFamily: "inherit", fontSize: 15, fontWeight: 600, transition: "background 0.2s"
+        }} onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"} onMouseLeave={e => e.currentTarget.style.background = open ? "rgba(255,255,255,0.03)" : "transparent"}>
+          <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 18 }}>📋</span> {recipe.name || recipe.title || "Recipe Overview"}
+            {recipe.servings && <span style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 400 }}>· {recipe.servings} servings</span>}
+          </span>
+          <span style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform .3s cubic-bezier(0.16, 1, 0.3, 1)", display: "flex", color: "var(--accent)" }}><IcChevron /></span>
+        </button>
 
-      {open && (
-        <div style={{ padding: "20px", fontSize: 14, color: "var(--text-main)", lineHeight: 1.7, borderTop: "1px solid var(--border-strong)", background: "rgba(0,0,0,0.1)" }}>
+        {open && (
+          <div style={{ padding: "20px", fontSize: 14, color: "var(--text-main)", lineHeight: 1.7, borderTop: "1px solid var(--border-strong)", background: "var(--bg)" }}>
 
-          {/* Cultural note */}
-          {recipe.cultural_note && (
-            <div style={{ background: "rgba(200,112,40,0.08)", padding: "12px 16px", borderRadius: 12, marginBottom: 20, border: "1px solid rgba(200, 104, 50, 0.2)" }}>
-              <p style={{ color: "var(--accent)", fontStyle: "italic", fontSize: 13 }}>📖 {recipe.cultural_note}</p>
-            </div>
-          )}
+            {/* Cultural note */}
+            {recipe.cultural_note && (
+              <div style={{ background: "rgba(200,112,40,0.08)", padding: "12px 16px", borderRadius: 12, marginBottom: 20, border: "1px solid rgba(200, 104, 50, 0.2)" }}>
+                <p style={{ color: "var(--accent)", fontStyle: "italic", fontSize: 13 }}>📖 {recipe.cultural_note}</p>
+              </div>
+            )}
 
-          {/* Moroccan adaptations (for moroccan_twist style) */}
-          {adaptationsArray.length > 0 && (
-            <div style={{ marginBottom: 24 }}>
-              <strong style={sectionLabel}>🌿 Moroccan Adaptations</strong>
-              <ul style={{ paddingLeft: 0, margin: 0, listStyle: "none" }}>
-                {adaptationsArray.map((adapt, i) => (
-                  <li key={i} style={{ marginBottom: 6, display: "flex", alignItems: "flex-start", gap: 8 }}>
-                    <span style={{ color: "var(--accent)", flexShrink: 0 }}>✦</span>
-                    <span style={{ color: "var(--text-muted)" }}>{typeof adapt === "object" ? JSON.stringify(adapt) : String(adapt)}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+            {/* Moroccan adaptations (for moroccan_twist style) */}
+            {adaptationsArray.length > 0 && (
+              <div style={{ marginBottom: 24 }}>
+                <strong style={sectionLabel}>🌿 Moroccan Adaptations</strong>
+                <ul style={{ paddingLeft: 0, margin: 0, listStyle: "none" }}>
+                  {adaptationsArray.map((adapt, i) => (
+                    <li key={i} style={{ marginBottom: 6, display: "flex", alignItems: "flex-start", gap: 8 }}>
+                      <span style={{ color: "var(--accent)", flexShrink: 0 }}>✦</span>
+                      <span style={{ color: "var(--text-muted)" }}>{typeof adapt === "object" ? JSON.stringify(adapt) : String(adapt)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
-          {/* Ingredients */}
-          {ingredientsArray.length > 0 && (
-            <div style={{ marginBottom: 24 }}>
-              <strong style={sectionLabel}>🛒 Ingredients</strong>
-              <ul style={{ paddingLeft: 0, margin: 0, listStyle: "none" }}>
-                {ingredientsArray.map((ing, i) => (
-                  <li key={i} style={{ marginBottom: 8, display: "flex", alignItems: "flex-start", gap: 8 }}>
-                    <span style={{ color: "var(--accent)", flexShrink: 0 }}>•</span>
-                    <span>{renderIngredient(ing)}</span>
-                  </li>
-                ))}
-              </ul>
+            {/* Ingredients */}
+            {ingredientsArray.length > 0 && (
+              <div style={{ marginBottom: 24 }}>
+                <strong style={sectionLabel}>🛒 Ingredients</strong>
+                <ul style={{ paddingLeft: 0, margin: 0, listStyle: "none" }}>
+                  {ingredientsArray.map((ing, i) => (
+                    <li key={i} style={{ marginBottom: 8, display: "flex", alignItems: "flex-start", gap: 8 }}>
+                      <span style={{ color: "var(--accent)", flexShrink: 0 }}>•</span>
+                      <span>{renderIngredient(ing)}</span>
+                    </li>
+                  ))}
+                </ul>
 
-              {/* Total price banner */}
-              {totalPrice?.amount != null && (
-                <div style={{
-                  marginTop: 14, padding: "10px 14px", borderRadius: 10,
-                  background: "rgba(200,112,40,0.1)", border: "1px solid rgba(200, 104, 50, 0.2)",
-                  display: "flex", alignItems: "center", gap: 8,
-                }}>
-                  <span style={{ fontSize: 16 }}>💰</span>
-                  <span style={{ color: "var(--text-muted)", fontSize: 13 }}>Estimated recipe cost:</span>
-                  <span style={{ color: "var(--accent)", fontWeight: 700, fontSize: 14 }}>
-                    ~{totalPrice.amount} {totalPrice.currency || "MAD"}
-                  </span>
-                  <span style={{ color: "var(--text-hint)", fontSize: 11 }}>(market estimate)</span>
-                </div>
-              )}
-            </div>
-          )}
+                {/* Total price banner */}
+                {totalPrice?.amount != null && (
+                  <div style={{
+                    marginTop: 14, padding: "10px 14px", borderRadius: 10,
+                    background: "rgba(200,112,40,0.1)", border: "1px solid rgba(200, 104, 50, 0.2)",
+                    display: "flex", alignItems: "center", gap: 8,
+                  }}>
+                    <span style={{ fontSize: 16 }}>💰</span>
+                    <span style={{ color: "var(--text-muted)", fontSize: 13 }}>Estimated recipe cost:</span>
+                    <span style={{ color: "var(--accent)", fontWeight: 700, fontSize: 14 }}>
+                      ~{totalPrice.amount} {totalPrice.currency || "MAD"}
+                    </span>
+                    <span style={{ color: "var(--text-hint)", fontSize: 11 }}>(market estimate)</span>
+                  </div>
+                )}
+              </div>
+            )}
 
-          {/* Cooking Steps */}
-          {stepsArray.length > 0 && (
-            <div style={{ marginBottom: 24 }}>
-              <strong style={sectionLabel}>👨‍🍳 Cooking Steps</strong>
-              <ol style={{ paddingLeft: 0, margin: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 12 }}>
-                {stepsArray.map((step, i) => {
-                  if (!step) return null;
-                  if (typeof step === "string") {
+            {/* Cooking Steps */}
+            {stepsArray.length > 0 && (
+              <div style={{ marginBottom: 24 }}>
+                <strong style={sectionLabel}>👨‍🍳 Cooking Steps</strong>
+                <ol style={{ paddingLeft: 0, margin: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 12 }}>
+                  {stepsArray.map((step, i) => {
+                    if (!step) return null;
+                    if (typeof step === "string") {
+                      return (
+                        <li key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                          <span style={{ minWidth: 24, height: 24, borderRadius: "50%", background: "var(--accent)", color: "#fff", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{i + 1}</span>
+                          <span style={{ paddingTop: 2 }}>{step}</span>
+                        </li>
+                      );
+                    }
+                    const title = step.title || step.name || `Step ${step.step_number || i + 1}`;
+                    const instr = step.instruction || step.text || step.desc || "";
+                    const dur = step.duration_minutes ? `${step.duration_minutes} min` : null;
                     return (
                       <li key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                        <span style={{ minWidth: 24, height: 24, borderRadius: "50%", background: "var(--accent)", color: "#fff", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{i + 1}</span>
-                        <span style={{ paddingTop: 2 }}>{step}</span>
+                        <span style={{ minWidth: 24, height: 24, borderRadius: "50%", background: "var(--accent)", color: "#fff", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 }}>
+                          {step.step_number || i + 1}
+                        </span>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
+                            <span style={{ fontWeight: 600, color: "var(--text-main)", fontSize: 13 }}>{title}</span>
+                            {dur && <span style={{ fontSize: 11, color: "var(--text-hint)", background: "rgba(0,0,0,0.06)", padding: "1px 8px", borderRadius: 10 }}>⏱ {dur}</span>}
+                          </div>
+                          {instr && <p style={{ margin: 0, color: "var(--text-muted)", fontSize: 13, lineHeight: 1.6 }}>{instr}</p>}
+                        </div>
                       </li>
                     );
-                  }
-                  const title = step.title || step.name || `Step ${step.step_number || i + 1}`;
-                  const instr = step.instruction || step.text || step.desc || "";
-                  const dur = step.duration_minutes ? `${step.duration_minutes} min` : null;
-                  return (
-                    <li key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                      <span style={{ minWidth: 24, height: 24, borderRadius: "50%", background: "var(--accent)", color: "#fff", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 }}>
-                        {step.step_number || i + 1}
-                      </span>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
-                          <span style={{ fontWeight: 600, color: "var(--text-main)", fontSize: 13 }}>{title}</span>
-                          {dur && <span style={{ fontSize: 11, color: "var(--text-hint)", background: "rgba(255,255,255,0.06)", padding: "1px 8px", borderRadius: 10 }}>⏱ {dur}</span>}
-                        </div>
-                        {instr && <p style={{ margin: 0, color: "var(--text-muted)", fontSize: 13, lineHeight: 1.6 }}>{instr}</p>}
-                      </div>
+                  })}
+                </ol>
+              </div>
+            )}
+
+            {/* Chef Tips */}
+            {tipsArray.length > 0 && (
+              <div style={{ marginBottom: 20 }}>
+                <strong style={sectionLabel}>💡 Chef Tips</strong>
+                <ul style={{ paddingLeft: 0, margin: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
+                  {tipsArray.map((tip, i) => (
+                    <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, background: "rgba(0,0,0,0.03)", padding: "10px 14px", borderRadius: 10, border: "1px solid rgba(0,0,0,0.05)" }}>
+                      <span style={{ color: "var(--accent)", flexShrink: 0 }}>✦</span>
+                      <span style={{ color: "var(--text-muted)", fontSize: 13 }}>{typeof tip === "object" ? JSON.stringify(tip) : String(tip)}</span>
                     </li>
-                  );
-                })}
-              </ol>
-            </div>
-          )}
+                  ))}
+                </ul>
+              </div>
+            )}
 
-          {/* Chef Tips */}
-          {tipsArray.length > 0 && (
-            <div style={{ marginBottom: 20 }}>
-              <strong style={sectionLabel}>💡 Chef Tips</strong>
-              <ul style={{ paddingLeft: 0, margin: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
-                {tipsArray.map((tip, i) => (
-                  <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, background: "rgba(255,255,255,0.03)", padding: "10px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.1)" }}>
-                    <span style={{ color: "var(--accent)", flexShrink: 0 }}>✦</span>
-                    <span style={{ color: "var(--text-muted)", fontSize: 13 }}>{typeof tip === "object" ? JSON.stringify(tip) : String(tip)}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+            {/* Pairing */}
+            {recipe.pairing && (
+              <div style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(200,112,40,0.06)", border: "1px solid rgba(200, 104, 50, 0.2)" }}>
+                <strong style={{ color: "var(--accent)", fontSize: 12, fontWeight: 700, display: "block", marginBottom: 4 }}>🍵 Suggested Pairing</strong>
+                <p style={{ margin: 0, color: "var(--text-muted)", fontSize: 13 }}>{recipe.pairing}</p>
+              </div>
+            )}
 
-          {/* Pairing */}
-          {recipe.pairing && (
-            <div style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(200,112,40,0.06)", border: "1px solid rgba(200, 104, 50, 0.2)" }}>
-              <strong style={{ color: "var(--accent)", fontSize: 12, fontWeight: 700, display: "block", marginBottom: 4 }}>🍵 Suggested Pairing</strong>
-              <p style={{ margin: 0, color: "var(--text-muted)", fontSize: 13 }}>{recipe.pairing}</p>
-            </div>
-          )}
-
-        </div>
-      )}
-    </div>
+          </div>
+        )}
+      </div>
   );
 }
 
@@ -616,7 +615,7 @@ function Bubble({ msg, onSend }) {
                 <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 700, marginBottom: 8 }}>💡 Suggestions</div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                   {msg.recommendedRecipes.slice(0, 3).map((r, i) => (
-                    <span key={i} style={{
+                    <span key={i} onClick={() => onSend && onSend(r.name)} style={{
                       padding: "6px 14px", background: "rgba(200,112,40,.08)",
                       border: "1px solid rgba(200, 104, 50, 0.2)", borderRadius: 20,
                       fontSize: 13, color: "var(--accent)", fontWeight: 500,
@@ -701,6 +700,12 @@ function Bubble({ msg, onSend }) {
 }
 
 // ── Main App ──────────────────────────────────────────────────────────────────
+const SUGGESTIONS = [
+  "🫕 Chicken tagine recipe", "🍚 Authentic couscous",
+  "🥗 Moroccan salad ideas", "🍕 I want pizza tonight",
+  "🧆 Best kefta recipe",    "🌿 Vegetarian Moroccan dish",
+];
+
 export default function KitchenApp() {
   injectTheme();
 
@@ -1035,7 +1040,17 @@ export default function KitchenApp() {
               <p style={{ color: "var(--text-muted)", marginBottom: 40, fontSize: 15, lineHeight: 1.6 }}>
                 Discover the rich flavors of Morocco. Ask for a traditional recipe, ingredient substitutions, or let me adapt your favorite dishes with a Moroccan twist.
               </p>
-              {/* Suggestion buttons removed to match provided visual design */}
+              <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 10 }}>
+                {SUGGESTIONS.map((sug, i) => (
+                  <button key={i} onClick={() => sendMessage(sug)} style={{
+                    padding: "10px 18px", borderRadius: 20, background: "#fff", border: "1px solid var(--border-strong)",
+                    color: "var(--text-main)", cursor: "pointer", fontSize: 14, transition: "all 0.2s",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.02)"
+                  }} onMouseEnter={e => e.currentTarget.style.borderColor = "var(--accent)"} onMouseLeave={e => e.currentTarget.style.borderColor = "var(--border-strong)"}>
+                    {sug}
+                  </button>
+                ))}
+              </div>
             </div>
           ) : (
             currentMsgs.map(msg => <Bubble key={msg.id} msg={msg} onSend={sendMessage} />)
