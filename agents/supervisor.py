@@ -153,8 +153,9 @@ You have:
 
 If 'Full recipe' is 'none', your ONLY task is to gracefully present the 'Recommended recipes' to the user, highlighting why they match their preferences, and invite them to choose one.
 Otherwise, write the final answer. Include the recipe with steps, nutritional info,
-and personalised notes. If pricing data is available, include an estimated
-ingredient cost in MAD (mention it's a market estimate).
+and personalised notes. 
+If pricing data is available, include an estimated ingredient cost in MAD (mention it's a market estimate).
+Never hallucinate data. If you do not have a specific data point, do not mention it.
 If style is "moroccan_twist", highlight the Moroccan adaptations clearly.
 Be conversational and friendly. If the critic flagged issues, address them naturally.
 When mentioning quality or score, always reference the exact critic_score value above."""

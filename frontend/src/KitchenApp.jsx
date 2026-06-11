@@ -474,22 +474,6 @@ function RecipeCard({ recipe }) {
                     </li>
                   ))}
                 </ul>
-
-                {/* Total price banner */}
-                {totalPrice?.amount != null && (
-                  <div style={{
-                    marginTop: 14, padding: "10px 14px", borderRadius: 10,
-                    background: "rgba(200,112,40,0.1)", border: "1px solid rgba(200, 104, 50, 0.2)",
-                    display: "flex", alignItems: "center", gap: 8,
-                  }}>
-                    <span style={{ fontSize: 16 }}>💰</span>
-                    <span style={{ color: "var(--text-muted)", fontSize: 13 }}>Estimated recipe cost:</span>
-                    <span style={{ color: "var(--accent)", fontWeight: 700, fontSize: 14 }}>
-                      ~{totalPrice.amount} {totalPrice.currency || "MAD"}
-                    </span>
-                    <span style={{ color: "var(--text-hint)", fontSize: 11 }}>(market estimate)</span>
-                  </div>
-                )}
               </div>
             )}
 

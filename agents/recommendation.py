@@ -35,7 +35,7 @@ It should quietly shape and color your recommendations, not dominate them. Concr
 Additional context from web search: {web_context}
 
 Reply with a JSON array (no markdown) where each item has:
-  "name"        : dish name in English (and Darija/French if known)
+  "name"        : dish name in user_language (Darija if known)
   "description" : 2-sentence description
   "why"         : why this matches the user's preferences
   "difficulty"  : easy / medium / hard

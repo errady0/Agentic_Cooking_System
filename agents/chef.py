@@ -41,7 +41,7 @@ Produce an authentic Moroccan recipe. Use traditional Moroccan spice names
 Include cultural context and Moroccan accompaniments.
 
 Reply with a JSON object (no markdown) with these exact keys:
-  "name"         : full dish name (user_language + Arabic/Darija)
+  "name"         : full dish name in user_language
   "style"        : "moroccan"
   "servings"     : integer (default 2)
   "ingredients"  : list of {{"item", "quantity", "notes"}}
@@ -67,7 +67,7 @@ supplement key flavours and spices with Moroccan equivalents:
     from the classic version, so the user understands what makes it Moroccan.
 
 Reply with a JSON object (no markdown) with these exact keys:
-  "name"                 : dish name + " — Moroccan Twist"
+  "name"                 : dish name in user_language + " — Moroccan Twist"
   "style"                : "moroccan_twist"
   "servings"             : integer (default 2)
   "ingredients"          : list of {{"item", "quantity", "notes"}}
@@ -91,7 +91,7 @@ Do NOT add Moroccan spices, ingredients, or techniques.
 Use the traditional spices, methods, and accompaniments of {origin_cuisine} cuisine.
 
 Reply with a JSON object (no markdown) with these exact keys:
-  "name"         : full dish name (in user_language + original language if applicable)
+  "name"         : full dish name in user_language
   "style"        : "classic"
   "origin"       : "{origin_cuisine}"
   "servings"     : integer (default 2)
