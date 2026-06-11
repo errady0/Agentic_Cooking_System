@@ -40,11 +40,14 @@ Produce an authentic Moroccan recipe. Use traditional Moroccan spice names
 (ras el hanout, chermoula, preserved lemon, argan oil, etc.) where appropriate.
 Include cultural context and Moroccan accompaniments.
 
+CRITICAL INSTRUCTION FOR INGREDIENTS:
+You MUST output the "item" field of the ingredients array in English, regardless of the user's language. This is required for our internal pricing system to work. The rest of the JSON (name, steps, tips) should be in the user's language.
+
 Reply with a JSON object (no markdown) with these exact keys:
   "name"         : full dish name in user_language
   "style"        : "moroccan"
   "servings"     : integer (default 2)
-  "ingredients"  : list of {{"item", "quantity", "notes"}}
+  "ingredients"  : list of {{"item", "quantity", "notes"}} (item MUST be English)
   "steps"        : list of {{"step_number", "title", "instruction", "duration_minutes"}}
   "tips"         : list of 2-3 chef tips
   "cultural_note": 1-2 sentences about the dish's Moroccan heritage
@@ -66,11 +69,14 @@ supplement key flavours and spices with Moroccan equivalents:
   - Add a "moroccan_adaptations" key that clearly lists every change you made
     from the classic version, so the user understands what makes it Moroccan.
 
+CRITICAL INSTRUCTION FOR INGREDIENTS:
+You MUST output the "item" field of the ingredients array in English, regardless of the user's language. This is required for our internal pricing system to work. The rest of the JSON (name, steps, tips) should be in the user's language.
+
 Reply with a JSON object (no markdown) with these exact keys:
   "name"                 : dish name in user_language + " — Moroccan Twist"
   "style"                : "moroccan_twist"
   "servings"             : integer (default 2)
-  "ingredients"          : list of {{"item", "quantity", "notes"}}
+  "ingredients"          : list of {{"item", "quantity", "notes"}} (item MUST be English)
   "steps"                : list of {{"step_number", "title", "instruction", "duration_minutes"}}
   "tips"                 : list of 2-3 chef tips
   "cultural_note"        : 1-2 sentences explaining the Moroccan inspiration
@@ -90,12 +96,15 @@ traditionally made in its country of origin.
 Do NOT add Moroccan spices, ingredients, or techniques.
 Use the traditional spices, methods, and accompaniments of {origin_cuisine} cuisine.
 
+CRITICAL INSTRUCTION FOR INGREDIENTS:
+You MUST output the "item" field of the ingredients array in English, regardless of the user's language. This is required for our internal pricing system to work. The rest of the JSON (name, steps, tips) should be in the user's language.
+
 Reply with a JSON object (no markdown) with these exact keys:
   "name"         : full dish name in user_language
   "style"        : "classic"
   "origin"       : "{origin_cuisine}"
   "servings"     : integer (default 2)
-  "ingredients"  : list of {{"item", "quantity", "notes"}}
+  "ingredients"  : list of {{"item", "quantity", "notes"}} (item MUST be English)
   "steps"        : list of {{"step_number", "title", "instruction", "duration_minutes"}}
   "tips"         : list of 2-3 chef tips
   "cultural_note": 1-2 sentences about the dish's origin and tradition
@@ -229,13 +238,13 @@ def chef_agent(state: KitchenState) -> KitchenState:
                     return base_price * (val / 1000.0)
                 elif 'kg' in qty_lower or 'kilo' in qty_lower:
                     return base_price * val
-                elif 'tbsp' in qty_lower or 'tablespoon' in qty_lower:
+                elif 'tbsp' in qty_lower or 'tablespoon' in qty_lower or 'c. à soupe' in qty_lower or 'cuillère à soupe' in qty_lower:
                     return base_price * (val * 0.015)
-                elif 'tsp' in qty_lower or 'teaspoon' in qty_lower:
+                elif 'tsp' in qty_lower or 'teaspoon' in qty_lower or 'c. à café' in qty_lower or 'cuillère à café' in qty_lower:
                     return base_price * (val * 0.005)
                 elif 'cup' in qty_lower:
                     return base_price * (val * 0.25)
-                elif 'pinch' in qty_lower:
+                elif 'pinch' in qty_lower or 'pincée' in qty_lower:
                     return base_price * 0.001
                 else:
                     if val < 20 and not any(u in qty_lower for u in ['g', 'kg', 'l', 'ml']):
@@ -248,7 +257,7 @@ def chef_agent(state: KitchenState) -> KitchenState:
                     return base_price * val
                 elif 'cup' in qty_lower:
                     return base_price * (val * 0.25)
-                elif 'tbsp' in qty_lower:
+                elif 'tbsp' in qty_lower or 'c. à soupe' in qty_lower or 'cuillère à soupe' in qty_lower:
                     return base_price * (val * 0.015)
                 else:
                     return base_price * val

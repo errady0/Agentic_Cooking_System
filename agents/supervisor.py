@@ -154,7 +154,14 @@ You have:
 If 'Full recipe' is 'none', your ONLY task is to gracefully present the 'Recommended recipes' to the user, highlighting why they match their preferences, and invite them to choose one.
 Otherwise, write the final answer. Include the recipe with steps, nutritional info,
 and personalised notes. 
-If pricing data is available, include an estimated ingredient cost in MAD (mention it's a market estimate).
+
+PRICING RULES (CRITICAL — follow exactly):
+- The recipe JSON contains pre-computed pricing data: each ingredient may have a "calculated_price" field and the recipe has a "total_price" field.
+- When presenting ingredient prices, use ONLY the "calculated_price" value from each ingredient. Do NOT estimate, calculate, or invent any prices yourself.
+- For the total cost, use ONLY the "total_price.amount" value from the recipe. Do NOT sum or re-calculate the total yourself.
+- If an ingredient has no "calculated_price", show "—" (dash) for its price. Do NOT guess.
+- Mention that prices are estimated Moroccan market prices (données de marché {year}).
+
 Never hallucinate data. If you do not have a specific data point, do not mention it.
 If style is "moroccan_twist", highlight the Moroccan adaptations clearly.
 Be conversational and friendly. If the critic flagged issues, address them naturally.

@@ -580,19 +580,6 @@ function Bubble({ msg, onSend }) {
               <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
             </div>
 
-            {/* Quality badge */}
-            {msg.criticScore != null && (
-              <div style={{
-                display: "inline-flex", alignItems: "center", gap: 6, marginTop: 12,
-                padding: "4px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700,
-                background: msg.criticScore >= 7 ? "rgba(61, 138, 74, 0.1)" : msg.criticScore >= 5 ? "var(--accent-glow)" : "rgba(201, 64, 64, 0.15)",
-                color: msg.criticScore >= 7 ? "var(--green)" : msg.criticScore >= 5 ? "var(--accent)" : "var(--red)",
-                border: `1px solid ${msg.criticScore >= 7 ? "rgba(69, 154, 83, 0.3)" : msg.criticScore >= 5 ? "rgba(200, 104, 50, 0.2)" : "rgba(201, 64, 64, 0.3)"}`
-              }}>
-                ⭐ Quality Score: {msg.criticScore}/10 {msg.iterationCount != null ? `| Revisions: ${msg.iterationCount}` : ""}
-              </div>
-            )}
-
             {/* Recommended dishes */}
             {msg.recommendedRecipes?.length > 0 && (
               <div style={{ marginTop: 16 }}>
@@ -739,7 +726,6 @@ export default function KitchenApp() {
                   id: m.id || crypto.randomUUID(),
                   content: m.content || m.final_response || "No response.",
                   recommendedRecipes: m.recommendedRecipes || m.recommended_recipes || [],
-                  criticScore: m.criticScore ?? m.critic_score ?? null,
                   iterationCount: m.iterationCount ?? m.iteration_count ?? null,
                   styleChoice: m.styleChoice ?? m.style_choice ?? "",
                 };
@@ -831,7 +817,6 @@ export default function KitchenApp() {
         recipe: data.recipe || null,
         recommendedRecipes: data.recommended_recipes || [],
         nutrition: data.nutrition || null,
-        criticScore: data.critic_score ?? null,
         iterationCount: data.iteration_count ?? null,
         waiting: data.waiting ?? false,
         styleChoice: data.style_choice ?? "",
