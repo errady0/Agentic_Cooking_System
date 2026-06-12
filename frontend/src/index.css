@@ -1,18 +1,36 @@
 /* frontend/src/index.css */
 :root {
-  --bg: #f9f5eb;               /* Warm Almond Main Canvas */
-  --surface: #231914;          /* Deep Charcoal Brown Sidebar Background */
-  --surface-chat: #ffffff;     /* Pure White Base for message cards if needed */
-  --border: #dfd3c3;           /* Cream/Clay subtle border dividing lines */
-  --border-dark: #3a2b23;      /* Sidebar internal separators */
-  --text: #1a120b;             /* Espresso Black Typography */
-  --text-light: #f9f5eb;       /* Off-White text on dark components */
-  --text-muted: #7c6853;       /* Muted Olive-Brown text */
-  --text-muted-dark: #a9927d;  /* Muted text inside dark components */
-  --accent: #c86832;           /* Vibrant Harissa Orange active items */
-  --accent-hover: #b05423;     
+  --bg: #f9f5eb;
+  /* Warm Almond Main Canvas */
+  --surface: #231914;
+  /* Deep Charcoal Brown Sidebar Background */
+  --surface-chat: #ffffff;
+  /* Pure White Base for message cards if needed */
+  --border: #dfd3c3;
+  /* Cream/Clay subtle border dividing lines */
+  --border-dark: #3a2b23;
+  /* Sidebar internal separators */
+  --text: #1a120b;
+  /* Espresso Black Typography */
+  --text-light: #f9f5eb;
+  /* Off-White text on dark components */
+  --text-muted: #7c6853;
+  /* Muted Olive-Brown text */
+  --text-muted-dark: #a9927d;
+  /* Muted text inside dark components */
+  --accent: #D4A574;
+  /* Moroccan Gold active items */
+  --accent-hover: #C9956B;
+  --red: #C1121F;
+  /* Moroccan Red */
+  --green: #007A5E;
+  /* Moroccan Green */
   --font-display: 'Playfair Display', Georgia, serif;
   --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
@@ -20,4 +38,28 @@ body {
   background-color: var(--bg);
   color: var(--text);
   font-family: var(--font-body);
+}
+
+/* Scroll-driven fade-in animation */
+.landing-section {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.landing-section.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Staggered children animation */
+.stagger-child {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.stagger-child.visible {
+  opacity: 1;
+  transform: translateY(0);
 }

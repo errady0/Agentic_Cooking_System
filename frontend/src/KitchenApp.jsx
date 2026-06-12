@@ -25,16 +25,16 @@ const theme = `
     --text-muted-dark: #a9927d;   /* Muted text inside sidebar */
     --text-hint:       #b0a090;   /* Placeholder / hints */
 
-    /* Accent */
-    --accent:          #cd6c32;   /* Vibrant Harissa Orange */
-    --accent-hover:    #b55d28;
-    --accent-light:    rgba(200, 104, 50, 0.10);
-    --accent-glow:     rgba(200, 104, 50, 0.20);
+    /* Accent - Moroccan Gold */
+    --accent:          #D4A574;   /* Warm Moroccan Gold */
+    --accent-hover:    #C9956B;
+    --accent-light:    rgba(212, 165, 116, 0.10);
+    --accent-glow:     rgba(212, 165, 116, 0.20);
 
-    /* Status */
-    --green:           #3d8a4a;
-    --green-light:     rgba(61, 138, 74, 0.10);
-    --red:             #c94040;
+    /* Status - Moroccan Flag Colors */
+    --green:           #007A5E;   /* Moroccan Green */
+    --green-light:     rgba(0, 122, 94, 0.10);
+    --red:             #C1121F;   /* Moroccan Red */
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -227,12 +227,27 @@ function AuthScreen({ onAuth, initialMode = "login" }) {
   };
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg)" }}>
-      <div className="card fade-up" style={{ width: 420, padding: "44px 40px", borderRadius: 24 }}>
-        <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <div style={{ fontSize: 48, marginBottom: 14 }}>🫕</div>
-          <h1 style={{ fontFamily: "'Playfair Display',Georgia,serif", fontSize: 32, color: "var(--text-main)", marginBottom: 6, fontWeight: 600, letterSpacing: "0.01em" }}>ATLAS KITCHEN</h1>
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg)", position: "relative", overflow: "hidden" }}>
+      {/* Background faint stars */}
+      <div style={{ position: "absolute", top: "10%", left: "5%", fontSize: 300, color: "var(--red)", opacity: 0.02, pointerEvents: "none", zIndex: 0 }}>★</div>
+      <div style={{ position: "absolute", bottom: "10%", right: "10%", fontSize: 240, color: "var(--green)", opacity: 0.02, pointerEvents: "none", zIndex: 0 }}>★</div>
+
+      <div className="card fade-up" style={{ width: 420, padding: "44px 40px", borderRadius: 24, position: "relative", zIndex: 1, background: "#fff", boxShadow: "0 8px 32px rgba(0,0,0,0.06)" }}>
+        {/* Back arrow */}
+        <button style={{ position: "absolute", top: 24, left: 24, background: "transparent", border: "1px solid var(--border)", borderRadius: "50%", width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "var(--text-muted)", transition: "all 0.2s" }} onMouseEnter={e => e.currentTarget.style.background = "var(--surface-hover)"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+          <span style={{ fontSize: 18 }}>←</span>
+        </button>
+
+        <div style={{ textAlign: "center", marginBottom: 32, marginTop: 12 }}>
+          <div style={{ width: 72, height: 72, margin: "0 auto 16px", borderRadius: "50%", overflow: "hidden", border: "3px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg)" }}>
+            <img src="/moroccan_tagine.png" alt="Atlas Kitchen" style={{ width: "120%", height: "120%", objectFit: "cover" }} />
+          </div>
+          <h1 style={{ fontFamily: "'Playfair Display',Georgia,serif", fontSize: 32, color: "var(--text-main)", marginBottom: 6, fontWeight: 700, letterSpacing: "0.01em" }}>ATLAS KITCHEN</h1>
           <p style={{ color: "var(--text-muted)", fontSize: 14 }}>Your Moroccan culinary guide</p>
+          <div style={{ width: 80, height: 3, margin: "16px auto 0", display: "flex", borderRadius: 2, overflow: "hidden" }}>
+            <div style={{ flex: 1, background: "var(--red)" }} />
+            <div style={{ flex: 1, background: "var(--green)" }} />
+          </div>
         </div>
 
         {/* Tabs */}
@@ -242,7 +257,7 @@ function AuthScreen({ onAuth, initialMode = "login" }) {
               flex: 1, padding: "9px", border: "none", borderRadius: 8, cursor: "pointer",
               fontFamily: "inherit", fontSize: 14, fontWeight: 600,
               background: mode === m ? "#fff" : "transparent",
-              color: mode === m ? "var(--accent)" : "var(--text-muted)",
+              color: mode === m ? "var(--red)" : "var(--text-muted)",
               boxShadow: mode === m ? "0 1px 4px rgba(26,18,11,0.10)" : "none",
               transition: "all .2s",
             }}>
@@ -273,15 +288,15 @@ function AuthScreen({ onAuth, initialMode = "login" }) {
         {error && <p style={{ color: "var(--red)", fontSize: 13, textAlign: "center", margin: "8px 0 12px" }}>{error}</p>}
 
         <button onClick={submit} disabled={loading} style={{
-          width: "100%", padding: "13px", marginTop: 10, background: "var(--accent)", border: "none",
+          width: "100%", padding: "14px", marginTop: 10, background: "var(--red)", border: "none",
           borderRadius: 12, cursor: loading ? "not-allowed" : "pointer", color: "#fff",
           fontFamily: "inherit", fontSize: 15, fontWeight: 600, letterSpacing: "0.01em",
           display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
           opacity: loading ? 0.85 : 1, transition: "all .2s",
-          boxShadow: "0 3px 12px var(--accent-glow)",
+          boxShadow: "0 4px 16px rgba(193,18,31,0.25)",
         }}
-          onMouseEnter={e => !loading && (e.currentTarget.style.background = "var(--accent-hover)")}
-          onMouseLeave={e => !loading && (e.currentTarget.style.background = "var(--accent)")}
+          onMouseEnter={e => !loading && (e.currentTarget.style.background = "#a33434")}
+          onMouseLeave={e => !loading && (e.currentTarget.style.background = "var(--red)")}
         >
           {loading ? <><span className="spin"><IcLoader /></span> Authenticating…</> : mode === "login" ? "Sign In" : "Create Account"}
         </button>
@@ -430,7 +445,6 @@ function RecipeCard({ recipe }) {
   const stepsArray = Array.isArray(recipe.steps) ? recipe.steps : recipe.steps ? [recipe.steps] : [];
   const tipsArray = Array.isArray(recipe.tips) ? recipe.tips : recipe.tips ? [recipe.tips] : [];
   const adaptationsArray = Array.isArray(recipe.moroccan_adaptations) ? recipe.moroccan_adaptations : recipe.moroccan_adaptations ? [recipe.moroccan_adaptations] : [];
-  const totalPrice = recipe.total_price;
 
   const sectionLabel = {
     color: "var(--accent)", display: "block", marginBottom: 10,
@@ -596,18 +610,39 @@ function Bubble({ msg, onSend }) {
             {/* Recommended dishes */}
             {msg.recommendedRecipes?.length > 0 && (
               <div style={{ marginTop: 16 }}>
-                <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 700, marginBottom: 8 }}>💡 Suggestions</div>
+                <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 700, marginBottom: 8 }}>✨ Discover More</div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                  {msg.recommendedRecipes.slice(0, 3).map((r, i) => (
-                    <span key={i} onClick={() => onSend && onSend(r.name)} style={{
-                      padding: "6px 14px", background: "rgba(200,112,40,.08)",
-                      border: "1px solid rgba(200, 104, 50, 0.2)", borderRadius: 20,
-                      fontSize: 13, color: "var(--accent)", fontWeight: 500,
-                      cursor: "pointer", transition: "all 0.2s"
-                    }} onMouseEnter={e => e.currentTarget.style.background = "rgba(200,112,40,.15)"} onMouseLeave={e => e.currentTarget.style.background = "rgba(200,112,40,.08)"}>
-                      {r.name}{r.time_minutes ? ` · ${r.time_minutes}m` : ""}
-                    </span>
-                  ))}
+                  {msg.recommendedRecipes.slice(0, 3).map((r, i) => {
+                    const descriptions = {
+                      "Chicken Tagine": "Tender & aromatic",
+                      "Royal Couscous": "Fluffy & savory",
+                      "Sweet Pastilla": "Crispy & elegant",
+                      "Harira Soup": "Hearty & warming",
+                      "Moroccan Salad": "Fresh & vibrant",
+                      "Lamb Kofta": "Spiced & juicy",
+                      "Vegetable Tagine": "Wholesome & colorful",
+                      "Tagine de poulet aux citrons confits et olives": "Tender & aromatic",
+                      "Tagine d'agneau aux pruneaux et amandes": "Rich & sweet",
+                      "Couscous aux sept légumes": "Fluffy & savory",
+                      "Pastilla de poulet et amandes": "Crispy & elegant",
+                      "Soupe Harira": "Hearty & warming",
+                      "Salade Marocaine": "Fresh & vibrant",
+                      "Kefta": "Spiced & juicy",
+                      "Tagine de légumes": "Wholesome & colorful"
+                    };
+                    const desc = descriptions[r.name] || "Must try";
+                    return (
+                      <span key={i} onClick={() => onSend && onSend(r.name)} style={{
+                        padding: "8px 14px", background: "linear-gradient(135deg, rgba(193, 18, 31, 0.08) 0%, rgba(0, 122, 94, 0.08) 100%)",
+                        border: "1px solid rgba(193, 18, 31, 0.2)", borderRadius: 20,
+                        fontSize: 13, color: "var(--accent)", fontWeight: 500,
+                        cursor: "pointer", transition: "all 0.2s", display: "flex", flexDirection: "column", alignItems: "flex-start"
+                      }} onMouseEnter={e => e.currentTarget.style.background = "linear-gradient(135deg, rgba(193, 18, 31, 0.15) 0%, rgba(0, 122, 94, 0.15) 100%)"} onMouseLeave={e => e.currentTarget.style.background = "linear-gradient(135deg, rgba(193, 18, 31, 0.08) 0%, rgba(0, 122, 94, 0.08) 100%)"}>
+                        <span style={{ fontWeight: 600, color: "var(--text-main)" }}>{r.name}</span>
+                        <span style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>{desc}{r.time_minutes ? ` · ${r.time_minutes}m` : ""}</span>
+                      </span>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -687,73 +722,431 @@ function Bubble({ msg, onSend }) {
 
 // ── Main App ──────────────────────────────────────────────────────────────────
 const IMAGE_SUGGESTIONS = [
-  { title: "Chicken Tagine", img: "https://images.unsplash.com/photo-1541518763669-27fef04b14ea?auto=format&fit=crop&q=80&w=400" },
-  { title: "Royal Couscous", img: "https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&q=80&w=400" },
-  { title: "Sweet Pastilla", img: "https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&q=80&w=400" }
+  { title: "Chicken Tagine", img: "/moroccan_tagine.png", desc: "Slow-cooked aromatic spiced chicken" },
+  { title: "Royal Couscous", img: "/moroccan_couscous.png", desc: "Fluffy mounds with seven vegetables" },
+  { title: "Sweet Pastilla", img: "/moroccan_pastilla.png", desc: "Crispy phyllo with almonds & cinnamon" }
+];
+
+// ── Scroll animation hook ─────────────────────────────────────────────────────
+function useScrollReveal() {
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("visible");
+            // Staggered children
+            const children = entry.target.querySelectorAll(".stagger-child");
+            children.forEach((child, i) => {
+              setTimeout(() => child.classList.add("visible"), i * 120);
+            });
+          }
+        });
+      },
+      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" }
+    );
+    document.querySelectorAll(".landing-section").forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+}
+
+// ── Capability card data ──────────────────────────────────────────────────────
+const CAPABILITIES = [
+  {
+    icon: "🫕",
+    title: "Authentic Moroccan Recipes",
+    desc: "Get step-by-step traditional Moroccan recipes with cultural context, chef tips, ingredient pricing, and perfect pairings.",
+    example: "\"Make me a chicken tagine\"",
+    gradient: "linear-gradient(135deg, #C1121F 0%, #a33434 100%)",
+  },
+  {
+    icon: "🌍",
+    title: "World Kitchen Fusion",
+    desc: "Cook any dish from any cuisine — choose between the classic original or a Moroccan twist with ras el hanout, harissa & preserved lemons.",
+    example: "\"I want to make pizza\"",
+    gradient: "linear-gradient(135deg, #007A5E 0%, #00a67d 100%)",
+  },
+  {
+    icon: "✨",
+    title: "Smart Recommendations",
+    desc: "Personalized dish suggestions based on your taste profile, dietary needs, and what you've cooked before. Your AI learns your palate.",
+    example: "\"What should I cook today?\"",
+    gradient: "linear-gradient(135deg, #D4A574 0%, #C9956B 100%)",
+  },
+  {
+    icon: "📊",
+    title: "Nutrition Analysis",
+    desc: "Automatic nutritional breakdown with calories, macros, Mediterranean diet score, and alerts for dietary conflicts.",
+    example: "Included with every recipe",
+    gradient: "linear-gradient(135deg, #8B5E3C 0%, #6B4226 100%)",
+  },
+  {
+    icon: "💰",
+    title: "Moroccan Market Pricing",
+    desc: "Real-time Moroccan market prices (MAD) for every ingredient. Know exactly what your recipe costs before you shop at the souk.",
+    example: "Calculated per ingredient",
+    gradient: "linear-gradient(135deg, #b8860b 0%, #d4a017 100%)",
+  },
+  {
+    icon: "📖",
+    title: "Culinary Knowledge",
+    desc: "Ask about techniques, spices, food culture, or cooking science. Get expert answers without needing a full recipe.",
+    example: "\"What is ras el hanout?\"",
+    gradient: "linear-gradient(135deg, #6B4226 0%, #8B5E3C 100%)",
+  },
+];
+
+// ── Pipeline steps ────────────────────────────────────────────────────────────
+const PIPELINE_STEPS = [
+  { icon: "💬", title: "You Ask", desc: "Type any food question or recipe request" },
+  { icon: "🧠", title: "AI Understands", desc: "Intent classified across 5 categories" },
+  { icon: "🎯", title: "Smart Match", desc: "Personalized dishes recommended for you" },
+  { icon: "👨‍🍳", title: "Chef Cooks", desc: "Full recipe with steps, tips & pricing" },
+  { icon: "🔬", title: "Nutrition Check", desc: "Calories, macros & dietary analysis" },
+  { icon: "⭐", title: "Quality Review", desc: "Critic scores & refines up to 3×" },
 ];
 
 function LandingPage({ onStartCooking, onCreateAccount }) {
-  return (
-    <div style={{ minHeight: "100vh", background: "var(--bg)", display: "flex", flexDirection: "column", position: "relative", overflowX: "hidden", overflowY: "auto" }}>
-      {/* Background faint stars */}
-      <div style={{ position: "absolute", top: "5%", left: "5%", fontSize: 400, color: "var(--red)", opacity: 0.03, pointerEvents: "none", zIndex: 0 }}>★</div>
-      <div style={{ position: "absolute", bottom: "10%", right: "20%", fontSize: 300, color: "var(--green)", opacity: 0.03, pointerEvents: "none", zIndex: 0 }}>★</div>
-      <div style={{ position: "absolute", bottom: "-5%", left: "30%", fontSize: 200, color: "var(--red)", opacity: 0.02, pointerEvents: "none", zIndex: 0 }}>★</div>
+  useScrollReveal();
 
-      <div style={{ padding: "24px 48px", display: "flex", justifyContent: "space-between", alignItems: "center", zIndex: 10 }}>
+  return (
+    <div style={{ minHeight: "100vh", background: "var(--bg)", position: "relative", overflowX: "hidden", overflowY: "auto" }}>
+
+      {/* ═══════════════ NAVBAR ═══════════════ */}
+      <nav style={{
+        padding: "20px 48px", display: "flex", justifyContent: "space-between", alignItems: "center",
+        position: "sticky", top: 0, zIndex: 100, background: "rgba(251,249,244,0.92)", backdropFilter: "blur(12px)",
+        borderBottom: "1px solid rgba(223,211,195,0.5)"
+      }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ width: 44, height: 44, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}>🫕</div>
+          <div style={{ width: 42, height: 42, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, boxShadow: "0 4px 12px var(--accent-glow)" }}>🫕</div>
           <div>
-            <div style={{ fontFamily: "'Playfair Display',serif", fontSize: 24, fontWeight: 700, color: "var(--text-main)", letterSpacing: "0.02em" }}>ATLAS KITCHEN</div>
-            <div style={{ fontSize: 11, color: "var(--red)", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>MOROCCAN CULINARY AI</div>
+            <div style={{ fontFamily: "'Playfair Display',serif", fontSize: 22, fontWeight: 700, color: "var(--text-main)", letterSpacing: "0.02em" }}>ATLAS KITCHEN</div>
+            <div style={{ fontSize: 10, color: "var(--red)", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>MOROCCAN CULINARY AI</div>
           </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <button style={{ width: 40, height: 40, background: "var(--red)", borderRadius: 8, border: "none", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 4px 12px rgba(201, 64, 64, 0.2)" }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
-          </button>
-          <button onClick={onStartCooking} style={{ padding: "10px 24px", background: "var(--red)", color: "#fff", border: "none", borderRadius: 30, fontSize: 14, fontWeight: 600, cursor: "pointer", transition: "all 0.2s", boxShadow: "0 4px 12px rgba(201, 64, 64, 0.2)" }} onMouseEnter={e => { e.currentTarget.style.background = "#a33434"; }} onMouseLeave={e => { e.currentTarget.style.background = "var(--red)"; }}>
-            Get Started
-          </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <a href="#capabilities" style={{ fontSize: 14, color: "var(--text-muted)", textDecoration: "none", fontWeight: 500, padding: "8px 14px", borderRadius: 20, transition: "all 0.2s" }}
+            onMouseEnter={e => e.currentTarget.style.color = "var(--text-main)"}
+            onMouseLeave={e => e.currentTarget.style.color = "var(--text-muted)"}
+          >Features</a>
+          <a href="#how-it-works" style={{ fontSize: 14, color: "var(--text-muted)", textDecoration: "none", fontWeight: 500, padding: "8px 14px", borderRadius: 20, transition: "all 0.2s" }}
+            onMouseEnter={e => e.currentTarget.style.color = "var(--text-main)"}
+            onMouseLeave={e => e.currentTarget.style.color = "var(--text-muted)"}
+          >How It Works</a>
+          <a href="#dishes" style={{ fontSize: 14, color: "var(--text-muted)", textDecoration: "none", fontWeight: 500, padding: "8px 14px", borderRadius: 20, transition: "all 0.2s" }}
+            onMouseEnter={e => e.currentTarget.style.color = "var(--text-main)"}
+            onMouseLeave={e => e.currentTarget.style.color = "var(--text-muted)"}
+          >Dishes</a>
+          <button onClick={onStartCooking} style={{ padding: "10px 24px", background: "var(--red)", color: "#fff", border: "none", borderRadius: 24, fontSize: 14, fontWeight: 600, cursor: "pointer", transition: "all 0.2s", boxShadow: "0 4px 12px rgba(193,18,31,0.2)", marginLeft: 8 }}
+            onMouseEnter={e => e.currentTarget.style.background = "#a33434"}
+            onMouseLeave={e => e.currentTarget.style.background = "var(--red)"}
+          >Get Started</button>
         </div>
-      </div>
+      </nav>
 
-      <div style={{ display: "flex", flex: 1, padding: "48px 48px 80px", alignItems: "center", gap: 64, maxWidth: 1400, margin: "0 auto", width: "100%", zIndex: 1, flexWrap: "wrap" }}>
-        <div style={{ flex: "1 1 400px", minWidth: 300 }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(201, 64, 64, 0.08)", border: "1px solid rgba(201, 64, 64, 0.15)", padding: "6px 16px", borderRadius: 20, marginBottom: 32 }}>
+      {/* ═══════════════ HERO ═══════════════ */}
+      <section style={{ padding: "80px 48px 100px", maxWidth: 1400, margin: "0 auto", display: "flex", alignItems: "center", gap: 64, position: "relative", flexWrap: "wrap" }}>
+        {/* Background stars */}
+        <div style={{ position: "absolute", top: "5%", left: "2%", fontSize: 380, color: "var(--red)", opacity: 0.03, pointerEvents: "none", zIndex: 0 }}>★</div>
+        <div style={{ position: "absolute", bottom: "0%", right: "15%", fontSize: 260, color: "var(--green)", opacity: 0.03, pointerEvents: "none", zIndex: 0 }}>★</div>
+
+        <div className="fade-up" style={{ flex: "1 1 440px", minWidth: 300, position: "relative", zIndex: 1 }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(193,18,31,0.08)", border: "1px solid rgba(193,18,31,0.15)", padding: "6px 16px", borderRadius: 20, marginBottom: 28 }}>
             <span style={{ fontSize: 14 }}>🇲🇦</span>
             <span style={{ fontSize: 13, color: "var(--red)", fontWeight: 600 }}>Made with ❤️ in Morocco</span>
           </div>
-          <h1 style={{ fontFamily: "'Playfair Display',serif", fontSize: 64, fontWeight: 700, lineHeight: 1.1, color: "var(--text-main)", marginBottom: 24 }}>
+          <h1 style={{ fontFamily: "'Playfair Display',serif", fontSize: "clamp(40px, 5vw, 64px)", fontWeight: 700, lineHeight: 1.1, color: "var(--text-main)", marginBottom: 20 }}>
             Discover the<br />
             <span style={{ color: "var(--red)" }}>Magic of </span>
             <span style={{ color: "var(--green)" }}>Moroccan</span><br />
             Cuisine
           </h1>
-          <p style={{ fontSize: 18, color: "var(--text-muted)", lineHeight: 1.6, marginBottom: 40, maxWidth: 500 }}>
+          <p style={{ fontSize: 18, color: "var(--text-muted)", lineHeight: 1.7, marginBottom: 16, maxWidth: 520 }}>
             Your personal AI culinary assistant, steeped in centuries of Moroccan tradition. From aromatic tagines to fluffy couscous — let technology meet tradition.
           </p>
-          <div style={{ display: "flex", gap: 16 }}>
-            <button onClick={onStartCooking} style={{ padding: "16px 32px", background: "var(--red)", color: "#fff", border: "none", borderRadius: 30, fontSize: 16, fontWeight: 600, cursor: "pointer", boxShadow: "0 8px 24px rgba(201, 64, 64, 0.25)", transition: "all 0.2s" }} onMouseEnter={e => e.currentTarget.style.background = "#a33434"} onMouseLeave={e => e.currentTarget.style.background = "var(--red)"}>
-              Start Cooking →
-            </button>
-            <button onClick={onCreateAccount} style={{ padding: "16px 32px", background: "transparent", color: "var(--green)", border: "2px solid var(--green)", borderRadius: 30, fontSize: 16, fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }} onMouseEnter={e => { e.currentTarget.style.background = "var(--green)"; e.currentTarget.style.color = "#fff"; }} onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--green)"; }}>
-              Create Account
-            </button>
+          <p style={{ fontSize: 15, color: "var(--text-hint)", lineHeight: 1.6, marginBottom: 36, maxWidth: 520, fontStyle: "italic" }}>
+            6 AI agents working together — recipes, nutrition, pricing, and quality review, all in one conversation.
+          </p>
+          <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+            <button onClick={onStartCooking} style={{ padding: "16px 36px", background: "var(--red)", color: "#fff", border: "none", borderRadius: 30, fontSize: 16, fontWeight: 600, cursor: "pointer", boxShadow: "0 8px 28px rgba(193,18,31,0.25)", transition: "all 0.3s" }}
+              onMouseEnter={e => { e.currentTarget.style.background = "#a33434"; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 12px 36px rgba(193,18,31,0.3)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "var(--red)"; e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "0 8px 28px rgba(193,18,31,0.25)"; }}
+            >Start Cooking →</button>
+            <button onClick={onCreateAccount} style={{ padding: "16px 36px", background: "transparent", color: "var(--green)", border: "2px solid var(--green)", borderRadius: 30, fontSize: 16, fontWeight: 600, cursor: "pointer", transition: "all 0.3s" }}
+              onMouseEnter={e => { e.currentTarget.style.background = "var(--green)"; e.currentTarget.style.color = "#fff"; e.currentTarget.style.transform = "translateY(-2px)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--green)"; e.currentTarget.style.transform = "none"; }}
+            >Create Account</button>
           </div>
         </div>
-        <div style={{ flex: "1 1 500px", position: "relative", height: 600, minWidth: 300 }}>
-          <img src="https://images.unsplash.com/photo-1541518763669-27fef04b14ea?auto=format&fit=crop&q=80&w=600" style={{ position: "absolute", top: 20, right: 0, width: 440, height: 440, objectFit: "cover", borderRadius: 24, boxShadow: "0 20px 40px rgba(0,0,0,0.15)", zIndex: 1, animation: "floatSlow 6s ease-in-out infinite", border: "8px solid #fff" }} alt="Tagine" />
 
-          {/* Floating Star badge */}
-          <div style={{ position: "absolute", top: 0, right: -20, width: 70, height: 70, borderRadius: "50%", background: "linear-gradient(135deg, rgba(201, 64, 64, 0.85) 0%, rgba(61, 138, 74, 0.85) 100%)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 4, color: "#fff", boxShadow: "0 10px 20px rgba(0,0,0,0.2)", animation: "floatFast 4s ease-in-out infinite" }}>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+        {/* Hero images — real dish photos */}
+        <div className="fade-up" style={{ flex: "1 1 500px", position: "relative", height: 560, minWidth: 300 }}>
+          {/* Main large image — Tagine */}
+          <div style={{ position: "absolute", top: 0, right: 20, width: 380, height: 380, borderRadius: 28, zIndex: 2, animation: "floatSlow 6s ease-in-out infinite", overflow: "hidden", boxShadow: "0 20px 60px rgba(0,0,0,0.18)", border: "8px solid #fff" }}>
+            <img src="/moroccan_tagine.png" alt="Moroccan Tagine" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          </div>
+          {/* Star badge */}
+          <div style={{ position: "absolute", top: -10, right: 0, width: 72, height: 72, borderRadius: "50%", background: "linear-gradient(135deg, #C1121F 0%, #007A5E 100%)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 4, color: "#fff", boxShadow: "0 12px 28px rgba(0,0,0,0.25)", animation: "floatFast 4s ease-in-out infinite" }}>
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+          </div>
+          {/* Couscous — bottom left */}
+          <div style={{ position: "absolute", bottom: 0, left: 0, width: 280, height: 280, borderRadius: 24, border: "8px solid #fff", boxShadow: "0 16px 48px rgba(0,0,0,0.15)", zIndex: 1, animation: "floatMedium 5s ease-in-out infinite", overflow: "hidden" }}>
+            <img src="/moroccan_couscous.png" alt="Royal Couscous" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          </div>
+          {/* Pastilla — bottom right */}
+          <div style={{ position: "absolute", bottom: 40, right: -10, width: 220, height: 220, borderRadius: 24, border: "8px solid #fff", boxShadow: "0 16px 48px rgba(0,0,0,0.15)", zIndex: 3, animation: "floatFast 4.5s ease-in-out infinite", overflow: "hidden" }}>
+            <img src="/moroccan_pastilla.png" alt="Sweet Pastilla" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════ CAPABILITIES ═══════════════ */}
+      <section id="capabilities" className="landing-section" style={{ padding: "100px 48px", maxWidth: 1200, margin: "0 auto" }}>
+        <div style={{ textAlign: "center", marginBottom: 64 }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "var(--accent-light)", padding: "6px 18px", borderRadius: 20, marginBottom: 20 }}>
+            <span style={{ fontSize: 12, color: "var(--accent)", fontWeight: 700, letterSpacing: "0.06em" }}>POWERED BY 6 AI AGENTS</span>
+          </div>
+          <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: "clamp(32px, 4vw, 48px)", fontWeight: 700, color: "var(--text-main)", marginBottom: 16 }}>
+            What Can <span style={{ color: "var(--red)" }}>Atlas Kitchen</span> Do?
+          </h2>
+          <p style={{ fontSize: 17, color: "var(--text-muted)", maxWidth: 600, margin: "0 auto", lineHeight: 1.7 }}>
+            From discovering recipes to calculating nutrition and market prices — everything happens in one intelligent conversation.
+          </p>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 24 }}>
+          {CAPABILITIES.map((cap, i) => (
+            <div key={i} className="stagger-child" style={{
+              background: "#fff", borderRadius: 20, padding: "32px 28px", border: "1px solid var(--border)",
+              transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)", cursor: "default",
+              boxShadow: "0 2px 12px rgba(0,0,0,0.04)", position: "relative", overflow: "hidden"
+            }}
+              onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-6px)"; e.currentTarget.style.boxShadow = "0 16px 40px rgba(0,0,0,0.10)"; e.currentTarget.style.borderColor = "var(--accent)"; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "0 2px 12px rgba(0,0,0,0.04)"; e.currentTarget.style.borderColor = "var(--border)"; }}
+            >
+              {/* Faint background glow */}
+              <div style={{ position: "absolute", top: -30, right: -30, width: 120, height: 120, borderRadius: "50%", background: cap.gradient, opacity: 0.06, pointerEvents: "none" }} />
+
+              <div style={{ width: 52, height: 52, borderRadius: 14, background: cap.gradient, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, marginBottom: 20, boxShadow: "0 6px 16px rgba(0,0,0,0.12)" }}>
+                {cap.icon}
+              </div>
+              <h3 style={{ fontFamily: "'Playfair Display',serif", fontSize: 20, fontWeight: 600, color: "var(--text-main)", marginBottom: 10 }}>{cap.title}</h3>
+              <p style={{ fontSize: 14, color: "var(--text-muted)", lineHeight: 1.7, marginBottom: 16 }}>{cap.desc}</p>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 14px", background: "var(--bg)", borderRadius: 12, border: "1px solid var(--border)" }}>
+                <span style={{ fontSize: 12, color: "var(--accent)", fontWeight: 600, fontStyle: "italic" }}>{cap.example}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ═══════════════ HOW IT WORKS ═══════════════ */}
+      <section id="how-it-works" className="landing-section" style={{ padding: "100px 48px", background: "linear-gradient(180deg, rgba(37,27,21,0.03) 0%, rgba(37,27,21,0) 100%)" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: 64 }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(0,122,94,0.08)", padding: "6px 18px", borderRadius: 20, marginBottom: 20 }}>
+              <span style={{ fontSize: 12, color: "var(--green)", fontWeight: 700, letterSpacing: "0.06em" }}>MULTI-AGENT PIPELINE</span>
+            </div>
+            <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: "clamp(32px, 4vw, 48px)", fontWeight: 700, color: "var(--text-main)", marginBottom: 16 }}>
+              How It <span style={{ color: "var(--green)" }}>Works</span>
+            </h2>
+            <p style={{ fontSize: 17, color: "var(--text-muted)", maxWidth: 600, margin: "0 auto", lineHeight: 1.7 }}>
+              Behind every recipe, 6 specialized AI agents collaborate to deliver a perfect result — automatically.
+            </p>
           </div>
 
-          <img src="https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&q=80&w=400" style={{ position: "absolute", bottom: -20, left: 20, width: 280, height: 280, objectFit: "cover", borderRadius: 24, border: "8px solid #fff", boxShadow: "0 20px 40px rgba(0,0,0,0.15)", zIndex: 2, animation: "floatMedium 5s ease-in-out infinite" }} alt="Couscous" />
-          <img src="https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&q=80&w=300" style={{ position: "absolute", bottom: 40, right: -40, width: 200, height: 200, objectFit: "cover", borderRadius: 24, border: "8px solid #fff", boxShadow: "0 20px 40px rgba(0,0,0,0.15)", zIndex: 3, animation: "floatFast 4.5s ease-in-out infinite" }} alt="Pastilla" />
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 16, position: "relative" }}>
+            {/* Connecting line behind the cards */}
+            <div style={{ position: "absolute", top: 44, left: "8%", right: "8%", height: 3, background: "linear-gradient(90deg, var(--red) 0%, var(--accent) 33%, var(--green) 66%, var(--accent) 100%)", borderRadius: 2, zIndex: 0, opacity: 0.2 }} />
+
+            {PIPELINE_STEPS.map((step, i) => (
+              <div key={i} className="stagger-child" style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", position: "relative", zIndex: 1 }}>
+                <div style={{
+                  width: 64, height: 64, borderRadius: "50%", background: "#fff", border: "3px solid var(--accent)",
+                  display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, marginBottom: 16,
+                  boxShadow: "0 6px 20px rgba(0,0,0,0.08)", position: "relative"
+                }}>
+                  {step.icon}
+                  <div style={{
+                    position: "absolute", top: -6, right: -6, width: 22, height: 22, borderRadius: "50%",
+                    background: i < 2 ? "var(--red)" : i < 4 ? "var(--accent)" : "var(--green)",
+                    color: "#fff", fontSize: 11, fontWeight: 700,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.15)"
+                  }}>{i + 1}</div>
+                </div>
+                <h4 style={{ fontFamily: "'Playfair Display',serif", fontSize: 15, fontWeight: 600, color: "var(--text-main)", marginBottom: 6 }}>{step.title}</h4>
+                <p style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5, maxWidth: 140 }}>{step.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Quality note */}
+          <div style={{
+            maxWidth: 640, margin: "48px auto 0", padding: "20px 28px", borderRadius: 16,
+            background: "rgba(212,165,116,0.08)", border: "1px solid rgba(212,165,116,0.2)",
+            textAlign: "center"
+          }}>
+            <p style={{ fontSize: 14, color: "var(--text-muted)", lineHeight: 1.7, margin: 0 }}>
+              <span style={{ color: "var(--accent)", fontWeight: 700 }}>⭐ Quality Guarantee</span> — Our AI critic reviews every recipe and may refine it up to <strong>3 times</strong> before serving it to you, ensuring accuracy, taste, and cultural authenticity.
+            </p>
+          </div>
         </div>
-      </div>
+      </section>
+
+      {/* ═══════════════ DISH SHOWCASE ═══════════════ */}
+      <section id="dishes" className="landing-section" style={{ padding: "100px 48px", maxWidth: 1200, margin: "0 auto" }}>
+        <div style={{ textAlign: "center", marginBottom: 64 }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(193,18,31,0.08)", padding: "6px 18px", borderRadius: 20, marginBottom: 20 }}>
+            <span style={{ fontSize: 12, color: "var(--red)", fontWeight: 700, letterSpacing: "0.06em" }}>TRADITIONAL MOROCCAN</span>
+          </div>
+          <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: "clamp(32px, 4vw, 48px)", fontWeight: 700, color: "var(--text-main)", marginBottom: 16 }}>
+            Iconic <span style={{ color: "var(--red)" }}>Dishes</span> to Explore
+          </h2>
+          <p style={{ fontSize: 17, color: "var(--text-muted)", maxWidth: 560, margin: "0 auto", lineHeight: 1.7 }}>
+            Start your journey with these beloved Moroccan classics — each one a gateway to centuries of culinary tradition.
+          </p>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 28 }}>
+          {[
+            { name: "Chicken Tagine", img: "/moroccan_tagine.png", desc: "Slow-cooked chicken with preserved lemons, olives, and aromatic spices in a traditional clay pot. A cornerstone of Moroccan hospitality.", time: "90 min", difficulty: "Medium", region: "Nationwide" },
+            { name: "Royal Couscous", img: "/moroccan_couscous.png", desc: "Hand-rolled semolina steamed to perfection, crowned with seven seasonal vegetables and tender meat. The Friday family feast.", time: "120 min", difficulty: "Medium", region: "Fes" },
+            { name: "Sweet Pastilla", img: "/moroccan_pastilla.png", desc: "Crispy layers of warqa pastry filled with spiced almonds, cinnamon, and powdered sugar. A sweet-savory Moroccan masterpiece.", time: "75 min", difficulty: "Hard", region: "Fes" },
+          ].map((dish, i) => (
+            <div key={i} className="stagger-child" onClick={onStartCooking} style={{
+              borderRadius: 24, overflow: "hidden", background: "#fff", border: "1px solid var(--border)",
+              cursor: "pointer", transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+              boxShadow: "0 4px 16px rgba(0,0,0,0.06)"
+            }}
+              onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-8px)"; e.currentTarget.style.boxShadow = "0 20px 48px rgba(0,0,0,0.14)"; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.06)"; }}
+            >
+              <div style={{ height: 220, overflow: "hidden", position: "relative" }}>
+                <img src={dish.img} alt={dish.name} style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)" }}
+                  onMouseEnter={e => e.currentTarget.style.transform = "scale(1.08)"}
+                  onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
+                />
+                <div style={{ position: "absolute", bottom: 12, left: 12, display: "flex", gap: 6 }}>
+                  <span style={{ padding: "4px 12px", background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", borderRadius: 12, fontSize: 11, color: "#fff", fontWeight: 600 }}>⏱ {dish.time}</span>
+                  <span style={{ padding: "4px 12px", background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", borderRadius: 12, fontSize: 11, color: "#fff", fontWeight: 600 }}>{dish.difficulty}</span>
+                </div>
+              </div>
+              <div style={{ padding: "24px 24px 28px" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                  <h3 style={{ fontFamily: "'Playfair Display',serif", fontSize: 22, fontWeight: 600, color: "var(--text-main)" }}>{dish.name}</h3>
+                  <span style={{ fontSize: 11, color: "var(--accent)", fontWeight: 600, background: "var(--accent-light)", padding: "3px 10px", borderRadius: 10 }}>📍 {dish.region}</span>
+                </div>
+                <p style={{ fontSize: 14, color: "var(--text-muted)", lineHeight: 1.7, marginBottom: 16 }}>{dish.desc}</p>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--red)", fontSize: 14, fontWeight: 600 }}>
+                  Try this recipe
+                  <span style={{ transition: "transform 0.2s" }}>→</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ═══════════════ PERSONALIZATION ═══════════════ */}
+      <section className="landing-section" style={{ padding: "100px 48px", background: "linear-gradient(180deg, rgba(37,27,21,0.03) 0%, rgba(37,27,21,0) 100%)" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", gap: 64, flexWrap: "wrap" }}>
+          <div style={{ flex: "1 1 380px", minWidth: 280 }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "var(--accent-light)", padding: "6px 18px", borderRadius: 20, marginBottom: 24 }}>
+              <span style={{ fontSize: 12, color: "var(--accent)", fontWeight: 700, letterSpacing: "0.06em" }}>PERSONALIZED FOR YOU</span>
+            </div>
+            <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: "clamp(28px, 3.5vw, 44px)", fontWeight: 700, color: "var(--text-main)", marginBottom: 16, lineHeight: 1.2 }}>
+              Your Kitchen,<br /><span style={{ color: "var(--accent)" }}>Your Rules</span>
+            </h2>
+            <p style={{ fontSize: 16, color: "var(--text-muted)", lineHeight: 1.7, marginBottom: 28, maxWidth: 440 }}>
+              Tell Atlas Kitchen what you love, what you avoid, and your dietary needs. Every recipe and recommendation adapts to your unique taste profile.
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              {[
+                { icon: "❤️", label: "Favorite dishes", desc: "Track dishes you love for smarter recommendations" },
+                { icon: "🚫", label: "Dishes to avoid", desc: "Never get suggested something you dislike" },
+                { icon: "🌿", label: "Dietary needs", desc: "Halal, vegan, gluten-free — always respected" },
+                { icon: "✍️", label: "Flavor notes", desc: "Love spicy? Prefer mild? We remember" },
+              ].map((item, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, background: "#fff", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>{item.icon}</div>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text-main)", marginBottom: 2 }}>{item.label}</div>
+                    <div style={{ fontSize: 13, color: "var(--text-muted)" }}>{item.desc}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Visual tag mockup */}
+          <div style={{ flex: "1 1 400px", minWidth: 280, display: "flex", justifyContent: "center" }}>
+            <div style={{
+              background: "#fff", borderRadius: 24, padding: "36px 32px", border: "1px solid var(--border)",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.06)", maxWidth: 400, width: "100%"
+            }}>
+              <h4 style={{ fontFamily: "'Playfair Display',serif", fontSize: 18, fontWeight: 600, color: "var(--text-main)", marginBottom: 20 }}>Your Taste Profile</h4>
+
+              <div style={{ marginBottom: 20 }}>
+                <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 10 }}>❤️ Dishes you love</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {["Tagine", "Couscous", "Bastilla", "Harira"].map(tag => (
+                    <span key={tag} style={{ padding: "6px 14px", borderRadius: 16, background: "var(--accent)", color: "#fff", fontSize: 13, fontWeight: 500, boxShadow: "0 2px 8px var(--accent-glow)" }}>{tag}</span>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ marginBottom: 20 }}>
+                <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 10 }}>🌿 Dietary requirements</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {["Halal", "Nut-free"].map(tag => (
+                    <span key={tag} style={{ padding: "6px 14px", borderRadius: 16, background: "var(--green)", color: "#fff", fontSize: 13, fontWeight: 500, boxShadow: "0 2px 8px rgba(0,122,94,0.2)" }}>{tag}</span>
+                  ))}
+                  {["Vegetarian", "Gluten-free", "Low-carb"].map(tag => (
+                    <span key={tag} style={{ padding: "6px 14px", borderRadius: 16, background: "var(--bg)", color: "var(--text-main)", fontSize: 13, fontWeight: 500, border: "1px solid var(--border)" }}>{tag}</span>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 10 }}>✍️ Flavor notes</div>
+                <div style={{ padding: "10px 14px", borderRadius: 12, background: "var(--bg)", border: "1px solid var(--border)", fontSize: 13, color: "var(--text-muted)", fontStyle: "italic" }}>
+                  "I love spicy food, prefer preserved lemons, and enjoy cinnamon in desserts…"
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════ FOOTER CTA ═══════════════ */}
+      <section className="landing-section" style={{ padding: "100px 48px", textAlign: "center", position: "relative" }}>
+        <div style={{ position: "absolute", top: "20%", left: "10%", fontSize: 260, color: "var(--red)", opacity: 0.02, pointerEvents: "none" }}>★</div>
+        <div style={{ position: "absolute", bottom: "10%", right: "15%", fontSize: 200, color: "var(--green)", opacity: 0.02, pointerEvents: "none" }}>★</div>
+
+        <div style={{ maxWidth: 640, margin: "0 auto", position: "relative", zIndex: 1 }}>
+          <div style={{ fontSize: 56, marginBottom: 20 }}>🫕</div>
+          <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: "clamp(28px, 4vw, 44px)", fontWeight: 700, color: "var(--text-main)", marginBottom: 16 }}>
+            Ready to Start <span style={{ color: "var(--red)" }}>Cooking</span>?
+          </h2>
+          <p style={{ fontSize: 17, color: "var(--text-muted)", lineHeight: 1.7, marginBottom: 36, maxWidth: 480, margin: "0 auto 36px" }}>
+            Join Atlas Kitchen and discover the rich flavors of Morocco — guided by AI, rooted in tradition.
+          </p>
+          <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
+            <button onClick={onStartCooking} style={{ padding: "18px 44px", background: "var(--red)", color: "#fff", border: "none", borderRadius: 30, fontSize: 17, fontWeight: 600, cursor: "pointer", boxShadow: "0 8px 28px rgba(193,18,31,0.25)", transition: "all 0.3s" }}
+              onMouseEnter={e => { e.currentTarget.style.background = "#a33434"; e.currentTarget.style.transform = "translateY(-2px)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "var(--red)"; e.currentTarget.style.transform = "none"; }}
+            >Get Started — It's Free</button>
+          </div>
+        </div>
+
+        {/* Bottom footer line */}
+        <div style={{ marginTop: 80, paddingTop: 28, borderTop: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+          <span style={{ fontSize: 16 }}>🇲🇦</span>
+          <span style={{ fontSize: 13, color: "var(--text-muted)" }}>Atlas Kitchen — Made with ❤️ in Morocco</span>
+        </div>
+      </section>
     </div>
   );
 }
@@ -982,15 +1375,15 @@ export default function KitchenApp() {
               <span style={{ fontSize: 24 }}>🫕</span>
               <div>
                 <div style={{ fontFamily: "'Playfair Display',serif", fontSize: 20, color: "var(--text-light)", letterSpacing: "0.02em", fontWeight: 600 }}>ATLAS KITCHEN</div>
-                <div style={{ fontSize: 10, color: "var(--accent)", fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase" }}>MOROCCAN & BEYOND</div>
+                <div style={{ fontSize: 10, color: "var(--red)", fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase" }}>MOROCCAN & BEYOND</div>
               </div>
             </div>
             <button onClick={createNewSession} style={{
-              width: "100%", padding: "12px", borderRadius: 8, background: "var(--accent)",
+              width: "100%", padding: "12px", borderRadius: 8, background: "var(--red)",
               border: "none", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
               gap: 8, fontFamily: "inherit", fontSize: 14, fontWeight: 600, cursor: "pointer",
               transition: "background 0.2s"
-            }} onMouseEnter={e => e.currentTarget.style.background = "var(--accent-hover)"} onMouseLeave={e => e.currentTarget.style.background = "var(--accent)"}>
+            }} onMouseEnter={e => e.currentTarget.style.background = "#a33434"} onMouseLeave={e => e.currentTarget.style.background = "var(--red)"}>
               <IcPlus /> New Culinary Journey
             </button>
           </div>
@@ -1008,22 +1401,22 @@ export default function KitchenApp() {
                   style={{
                     display: "flex", alignItems: "center", gap: 10, padding: "10px 12px",
                     borderRadius: 8, marginBottom: 4, cursor: "pointer", transition: "all .2s cubic-bezier(0.16, 1, 0.3, 1)",
-                    background: isActive ? "rgba(200, 104, 50, 0.1)" : "transparent",
-                    border: `1px solid ${isActive ? "rgba(200, 104, 50, 0.3)" : "transparent"}`,
+                    background: isActive ? "rgba(193, 18, 31, 0.1)" : "transparent",
+                    border: `1px solid ${isActive ? "rgba(193, 18, 31, 0.3)" : "transparent"}`,
                   }}
                   onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = "rgba(255,255,255,.03)"; }}
                   onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = "transparent"; }}
                 >
                   <span style={{
                     flex: 1, fontSize: 14, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                    color: isActive ? "var(--accent)" : "var(--text-muted)",
+                    color: isActive ? "var(--red)" : "var(--text-muted)",
                     fontWeight: isActive ? 600 : 400,
                   }}>
                     {cleanTitle}
                   </span>
                   <button onClick={e => deleteSession(sess.session_id, e)} style={{
                     background: "transparent", border: "none", cursor: "pointer",
-                    color: "var(--accent)", padding: 4, borderRadius: 6, display: "flex",
+                    color: "var(--red)", padding: 4, borderRadius: 6, display: "flex",
                     opacity: isActive ? 1 : 0, transition: "opacity .2s",
                   }}>
                     <IcTrash />
@@ -1037,7 +1430,7 @@ export default function KitchenApp() {
           <div style={{ padding: "16px 20px", background: "#1c130d" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
               <div style={{
-                width: 36, height: 36, borderRadius: 8, background: "var(--accent)",
+                width: 36, height: 36, borderRadius: 8, background: "var(--red)",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 color: "#fff", fontWeight: 700, fontSize: 15, flexShrink: 0
               }}>
@@ -1073,7 +1466,7 @@ export default function KitchenApp() {
 
         {/* Header */}
         <div style={{
-          padding: "16px 24px", display: "flex", alignItems: "center", gap: 16, zIndex: 10,
+          padding: "20px 32px", display: "flex", alignItems: "center", gap: 16, zIndex: 10,
           borderBottom: "1px solid var(--border-strong)"
         }}>
           <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{ background: "#fff", border: "1px solid var(--border-strong)", cursor: "pointer", color: "var(--text-muted)", padding: 8, borderRadius: 8, display: "flex", transition: "background 0.2s" }} onMouseEnter={e => e.currentTarget.style.background = "#f9f9f9"} onMouseLeave={e => e.currentTarget.style.background = "#fff"}>
@@ -1085,46 +1478,50 @@ export default function KitchenApp() {
             </div>
             <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 2 }}>Always ready to cook and inspire</div>
           </div>
-          <button onClick={() => setShowPrefs(true)} style={{
-            padding: "8px 16px", borderRadius: 20, background: "#fff", border: "1px solid var(--border-strong)",
-            cursor: "pointer", color: "var(--accent)", display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600, fontFamily: "inherit", transition: "background 0.2s"
-          }} onMouseEnter={e => e.currentTarget.style.background = "#fafafa"} onMouseLeave={e => e.currentTarget.style.background = "#fff"}>
-            <IcHeart f={prefs.liked?.length > 0} /> Profile {prefs.liked?.length > 0 && `(${prefs.liked.length})`}
-          </button>
-        </div>
+            <button onClick={() => setShowPrefs(true)} style={{
+              padding: "8px 16px", borderRadius: 20, background: "#fff", border: "1px solid var(--border-strong)",
+              cursor: "pointer", color: "var(--red)", display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600, fontFamily: "inherit", transition: "background 0.2s"
+            }} onMouseEnter={e => e.currentTarget.style.background = "#fafafa"} onMouseLeave={e => e.currentTarget.style.background = "#fff"}>
+              <IcHeart f={prefs.liked?.length > 0} /> Profile
+            </button>
+          </div>
 
         {/* Messages */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "32px 32px 16px" }}>
+        <div style={{ flex: 1, overflowY: "auto", padding: "40px 32px 16px" }}>
           {currentMsgs.length === 0 ? (
-            <div className="fade-up" style={{ textAlign: "center", paddingTop: 60, maxWidth: 800, margin: "0 auto", position: "relative" }}>
+            <div className="fade-up" style={{ textAlign: "center", paddingTop: 40, maxWidth: 900, margin: "0 auto", position: "relative" }}>
               {/* Star faint background element */}
-              <div style={{ position: "absolute", top: "10%", left: "-10%", fontSize: 300, color: "var(--accent)", opacity: 0.03, pointerEvents: "none", zIndex: 0 }}>★</div>
-              <div style={{ position: "absolute", top: "50%", right: "-10%", fontSize: 200, color: "var(--green)", opacity: 0.03, pointerEvents: "none", zIndex: 0 }}>★</div>
+              <div style={{ position: "absolute", top: "10%", left: "-10%", fontSize: 300, color: "var(--accent)", opacity: 0.02, pointerEvents: "none", zIndex: 0 }}>★</div>
+              <div style={{ position: "absolute", top: "50%", right: "-10%", fontSize: 200, color: "var(--green)", opacity: 0.02, pointerEvents: "none", zIndex: 0 }}>★</div>
 
-              <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(200, 104, 50, 0.08)", padding: "6px 16px", borderRadius: 20, marginBottom: 24, position: "relative", zIndex: 1 }}>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(193, 18, 31, 0.08)", padding: "8px 18px", borderRadius: 24, marginBottom: 28, position: "relative", zIndex: 1 }}>
                 <span style={{ fontSize: 14 }}>🇲🇦</span>
-                <span style={{ fontSize: 12, color: "var(--accent)", fontWeight: 700, letterSpacing: "0.05em" }}>ATLAS KITCHEN</span>
+                <span style={{ fontSize: 12, color: "var(--red)", fontWeight: 700, letterSpacing: "0.05em" }}>ATLAS KITCHEN</span>
               </div>
-              <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: 36, color: "var(--text-main)", fontWeight: 600, marginBottom: 16, position: "relative", zIndex: 1 }}>
+              <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: 44, color: "var(--text-main)", fontWeight: 600, marginBottom: 18, position: "relative", zIndex: 1, letterSpacing: "0.01em" }}>
                 What shall we create today?
               </h2>
-              <p style={{ color: "var(--text-muted)", marginBottom: 40, fontSize: 15, lineHeight: 1.6, maxWidth: 600, margin: "0 auto 40px", position: "relative", zIndex: 1 }}>
+              <p style={{ color: "var(--text-muted)", marginBottom: 44, fontSize: 16, lineHeight: 1.6, maxWidth: 620, margin: "0 auto 44px", position: "relative", zIndex: 1 }}>
                 Discover the rich flavors of Morocco. Ask for a traditional recipe, ingredient substitutions, or let me adapt your favorite dishes with a Moroccan twist.
               </p>
-              <div style={{ display: "flex", justifyContent: "center", gap: 16, position: "relative", zIndex: 1 }}>
+              <div style={{ display: "flex", justifyContent: "center", gap: 20, position: "relative", zIndex: 1, flexWrap: "wrap" }}>
                 {IMAGE_SUGGESTIONS.map((sug, i) => (
                   <button key={i} onClick={() => sendMessage(sug.title)} style={{
-                    width: 220, padding: 0, borderRadius: 16, background: "#fff", border: "1px solid var(--border-strong)",
-                    cursor: "pointer", transition: "all 0.2s", overflow: "hidden", display: "flex", flexDirection: "column",
-                    boxShadow: "0 4px 12px rgba(0,0,0,0.04)"
-                  }} onMouseEnter={e => e.currentTarget.style.transform = "translateY(-4px)"} onMouseLeave={e => e.currentTarget.style.transform = "none"}>
-                    <div style={{ height: 130, width: "100%", position: "relative" }}>
-                      <img src={sug.img} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt={sug.title} />
-                      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 4, background: i === 0 ? "var(--red)" : i === 1 ? "var(--green)" : "var(--accent)" }} />
+                    width: 200, padding: 0, borderRadius: 18, background: "#fff", border: "1px solid var(--border-strong)",
+                    cursor: "pointer", transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)", overflow: "hidden", display: "flex", flexDirection: "column",
+                    boxShadow: "0 4px 16px rgba(0,0,0,0.05)"
+                  }} onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-6px)"; e.currentTarget.style.boxShadow = "0 12px 28px rgba(0,0,0,0.12)"; }} onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.05)"; }}>
+                    <div style={{ height: 140, width: "100%", position: "relative", overflow: "hidden" }}>
+                      <img src={sug.img} alt={sug.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 4, display: "flex" }}>
+                        <div style={{ flex: 1, background: "var(--red)" }} />
+                        <div style={{ flex: 1, background: "var(--green)" }} />
+                      </div>
                     </div>
                     <div style={{ padding: "16px", fontWeight: 600, fontSize: 14, color: "var(--text-main)", textAlign: "center" }}>
                       {sug.title}
                     </div>
+                    <div style={{ fontSize: 12, color: "var(--text-muted)", paddingBottom: 12 }}>{sug.desc}</div>
                   </button>
                 ))}
               </div>
@@ -1136,13 +1533,13 @@ export default function KitchenApp() {
         </div>
 
         {/* Input bar */}
-        <div style={{ padding: "0 24px 24px", maxWidth: 800, margin: "0 auto", width: "100%" }}>
+        <div style={{ padding: "20px 32px 28px", maxWidth: 900, margin: "0 auto", width: "100%" }}>
           <div style={{
-            display: "flex", gap: 12, alignItems: "center",
-            borderRadius: 40, padding: "8px 8px 8px 24px",
+            display: "flex", gap: 12, alignItems: "flex-end",
+            borderRadius: 24, padding: "12px 20px 12px 24px",
             background: "#fff",
             border: "1px solid var(--border-strong)",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.03)"
+            boxShadow: "0 4px 16px rgba(0,0,0,0.04)"
           }}>
             <textarea ref={taRef} value={input}
               onChange={e => {
@@ -1159,7 +1556,7 @@ export default function KitchenApp() {
                 maxHeight: 120, overflow: "auto", fontFamily: "inherit"
               }}
             />
-            <div style={{ display: "flex", gap: 8 }}>
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
               {loading && (
                 <button onClick={() => {
                   if (abortControllerRef.current) {
@@ -1175,14 +1572,18 @@ export default function KitchenApp() {
               )}
               <button onClick={() => sendMessage()} disabled={!input.trim() || loading} style={{
                 width: 40, height: 40, borderRadius: "50%", flexShrink: 0, border: "none",
-                background: input.trim() && !loading ? "#e8e1d5" : "#f0ebe0",
+                background: input.trim() && !loading ? "var(--accent)" : "#f0ebe0",
                 display: "flex", alignItems: "center", justifyContent: "center",
-                color: input.trim() && !loading ? "#7c6853" : "#b0a090",
+                color: input.trim() && !loading ? "#fff" : "#b0a090",
                 cursor: input.trim() && !loading ? "pointer" : "not-allowed", transition: "all .2s",
-              }}>
+                boxShadow: input.trim() && !loading ? "0 4px 12px var(--accent-glow)" : "none"
+              }} onMouseEnter={e => input.trim() && !loading && (e.currentTarget.style.background = "var(--accent-hover)")} onMouseLeave={e => input.trim() && !loading && (e.currentTarget.style.background = "var(--accent)")}>
                 {loading ? <span className="spin"><IcLoader /></span> : <IcSend />}
               </button>
             </div>
+          </div>
+          <div style={{ textAlign: "center", marginTop: 12, fontSize: 12, color: "var(--text-hint)" }}>
+            Enter to send · Shift+Enter for new line
           </div>
         </div>
 
