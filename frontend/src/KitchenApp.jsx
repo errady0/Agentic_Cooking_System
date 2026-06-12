@@ -25,11 +25,11 @@ const theme = `
     --text-muted-dark: #a9927d;   /* Muted text inside sidebar */
     --text-hint:       #b0a090;   /* Placeholder / hints */
 
-    /* Accent - Moroccan Gold */
-    --accent:          #D4A574;   /* Warm Moroccan Gold */
-    --accent-hover:    #C9956B;
-    --accent-light:    rgba(212, 165, 116, 0.10);
-    --accent-glow:     rgba(212, 165, 116, 0.20);
+    /* Accent - Moroccan Green */
+    --accent:          #007A5E;   /* Moroccan Green */
+    --accent-hover:    #00634c;
+    --accent-light:    rgba(0, 122, 94, 0.10);
+    --accent-glow:     rgba(0, 122, 94, 0.20);
 
     /* Status - Moroccan Flag Colors */
     --green:           #007A5E;   /* Moroccan Green */
@@ -423,13 +423,13 @@ function PrefsPanel({ userId, prefs, onSaved, onClose }) {
 
         <div style={{ display: "flex", gap: 16 }}>
           <button onClick={onClose} style={{
-            flex: 1, padding: "16px", background: "rgba(0,0,0,0.04)", border: "none",
-            borderRadius: 16, cursor: "pointer", color: "var(--text-main)", fontFamily: "inherit", fontSize: 15, fontWeight: 600,
+            flex: 1, padding: "16px", background: "var(--red)", border: "none",
+            borderRadius: 16, cursor: "pointer", color: "#fff", fontFamily: "inherit", fontSize: 15, fontWeight: 600,
             transition: "all 0.2s"
-          }} onMouseEnter={e => e.currentTarget.style.background = "rgba(0,0,0,0.08)"} onMouseLeave={e => e.currentTarget.style.background = "rgba(0,0,0,0.04)"}>Cancel</button>
+          }} onMouseEnter={e => e.currentTarget.style.background = "#a33434"} onMouseLeave={e => e.currentTarget.style.background = "var(--red)"}>Cancel</button>
 
           <button onClick={save} disabled={saving} style={{
-            flex: 2, padding: "16px", background: "linear-gradient(135deg, var(--accent) 0%, #C9956B 100%)", border: "none",
+            flex: 2, padding: "16px", background: "linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%)", border: "none",
             borderRadius: 16, cursor: "pointer", color: "#fff", fontFamily: "inherit",
             fontSize: 15, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
             boxShadow: "0 8px 24px var(--accent-glow)", transition: "all 0.3s"
@@ -473,7 +473,7 @@ function RecipeCard({ recipe }) {
     <div style={{ marginTop: 16, background: "var(--surface-card)", borderRadius: 16, border: "1px solid var(--border-strong)", overflow: "hidden", transition: "all 0.3s", boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
       <button onClick={() => setOpen(!open)} style={{
         width: "100%", padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between",
-        background: open ? "rgba(205, 108, 50, 0.05)" : "transparent", border: "none", cursor: "pointer",
+        background: open ? "rgba(0, 122, 94, 0.05)" : "transparent", border: "none", cursor: "pointer",
         color: "var(--text-main)", fontFamily: "inherit", fontSize: 15, fontWeight: 600, transition: "background 0.2s"
       }} onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"} onMouseLeave={e => e.currentTarget.style.background = open ? "rgba(255,255,255,0.03)" : "transparent"}>
         <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -488,7 +488,7 @@ function RecipeCard({ recipe }) {
 
           {/* Cultural note */}
           {recipe.cultural_note && (
-            <div style={{ background: "rgba(200,112,40,0.08)", padding: "12px 16px", borderRadius: 12, marginBottom: 20, border: "1px solid rgba(200, 104, 50, 0.2)" }}>
+            <div style={{ background: "rgba(0, 122, 94, 0.08)", padding: "12px 16px", borderRadius: 12, marginBottom: 20, border: "1px solid rgba(0, 122, 94, 0.2)" }}>
               <p style={{ color: "var(--accent)", fontStyle: "italic", fontSize: 13 }}>📖 {recipe.cultural_note}</p>
             </div>
           )}
@@ -577,7 +577,7 @@ function RecipeCard({ recipe }) {
 
           {/* Pairing */}
           {recipe.pairing && (
-            <div style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(200,112,40,0.06)", border: "1px solid rgba(200, 104, 50, 0.2)" }}>
+            <div style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(0, 122, 94, 0.06)", border: "1px solid rgba(0, 122, 94, 0.2)" }}>
               <strong style={{ color: "var(--accent)", fontSize: 12, fontWeight: 700, display: "block", marginBottom: 4 }}>🍵 Suggested Pairing</strong>
               <p style={{ margin: 0, color: "var(--text-muted)", fontSize: 13 }}>{recipe.pairing}</p>
             </div>
@@ -598,7 +598,7 @@ function Bubble({ msg, onSend }) {
     <div className="fade-up" style={{ display: "flex", justifyContent: isUser ? "flex-end" : "flex-start", marginBottom: 24 }}>
       {!isUser && (
         <div style={{
-          width: 36, height: 36, borderRadius: 12, background: "linear-gradient(135deg, var(--accent) 0%, #a85a1a 100%)",
+          width: 36, height: 36, borderRadius: 12, background: "linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%)",
           display: "flex", alignItems: "center", justifyContent: "center",
           fontSize: 18, flexShrink: 0, marginRight: 14, marginTop: 4,
           boxShadow: "0 4px 12px var(--accent-glow)"
@@ -705,7 +705,7 @@ function Bubble({ msg, onSend }) {
 
             {/* Waiting for choice */}
             {msg.waiting && (
-              <div style={{ marginTop: 20, background: "rgba(200, 112, 40, 0.1)", padding: "16px", borderRadius: 16, border: "1px solid rgba(200, 104, 50, 0.2)" }}>
+              <div style={{ marginTop: 20, background: "rgba(0, 122, 94, 0.1)", padding: "16px", borderRadius: 16, border: "1px solid rgba(0, 122, 94, 0.2)" }}>
                 <div style={{ fontSize: 13, color: "var(--text-main)", marginBottom: 12, fontWeight: 600 }}>
                   🌍 World Kitchen — Choose your style
                 </div>
@@ -790,7 +790,7 @@ const CAPABILITIES = [
     title: "Smart Recommendations",
     desc: "Personalized dish suggestions based on your taste profile, dietary needs, and what you've cooked before. Your AI learns your palate.",
     example: "\"What should I cook today?\"",
-    gradient: "linear-gradient(135deg, #D4A574 0%, #C9956B 100%)",
+    gradient: "linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%)",
   },
   {
     icon: "📊",
@@ -1006,7 +1006,7 @@ function LandingPage({ onStartCooking, onCreateAccount }) {
           {/* Quality note */}
           <div style={{
             maxWidth: 640, margin: "48px auto 0", padding: "20px 28px", borderRadius: 16,
-            background: "rgba(212,165,116,0.08)", border: "1px solid rgba(212,165,116,0.2)",
+            background: "rgba(0, 122, 94, 0.08)", border: "1px solid rgba(0, 122, 94, 0.2)",
             textAlign: "center"
           }}>
             <p style={{ fontSize: 14, color: "var(--text-muted)", lineHeight: 1.7, margin: 0 }}>
@@ -1603,9 +1603,6 @@ export default function KitchenApp() {
                 {loading ? <span className="spin"><IcLoader /></span> : <IcSend />}
               </button>
             </div>
-          </div>
-          <div style={{ textAlign: "center", marginTop: 12, fontSize: 12, color: "var(--text-hint)" }}>
-            Enter to send · Shift+Enter for new line
           </div>
         </div>
 
