@@ -43,8 +43,6 @@ const theme = `
     background: var(--bg);
     color: var(--text-main);
     font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-    height: 100vh;
-    overflow: hidden;
   }
 
   /* Scrollbar */
@@ -343,80 +341,101 @@ function PrefsPanel({ userId, prefs, onSaved, onClose }) {
   };
 
   const fieldStyle = {
-    width: "100%", padding: "12px 16px", background: "#faf7f2",
-    border: "1px solid var(--border)", borderRadius: 12, color: "var(--text-main)",
-    fontSize: 14, outline: "none", fontFamily: "inherit", boxSizing: "border-box", transition: "border-color 0.2s"
+    width: "100%", padding: "16px 20px", background: "rgba(0,0,0,0.02)",
+    border: "1px solid rgba(0,0,0,0.06)", borderRadius: 16, color: "var(--text-main)",
+    fontSize: 15, outline: "none", fontFamily: "inherit", boxSizing: "border-box",
+    transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)"
   };
-  const labelStyle = { display: "block", fontSize: 12, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: 8 };
+  const labelStyle = { display: "block", fontSize: 13, fontWeight: 700, color: "var(--text-main)", letterSpacing: ".02em", marginBottom: 12 };
 
   return (
     <div onClick={e => e.target === e.currentTarget && onClose()} style={{
-      position: "fixed", inset: 0, background: "rgba(0,0,0,.4)", backdropFilter: "blur(4px)", zIndex: 200,
-      display: "flex", alignItems: "center", justifyContent: "center",
+      position: "fixed", inset: 0, background: "rgba(26, 18, 11, 0.3)", backdropFilter: "blur(12px)", zIndex: 200,
+      display: "flex", alignItems: "center", justifyContent: "center", padding: "24px"
     }}>
       <div className="card fade-up" style={{
-        width: 500, maxHeight: "85vh", overflowY: "auto", background: "#ffffff",
-        borderRadius: 24, padding: "36px 40px", boxShadow: "0 10px 40px rgba(0,0,0,0.15)"
+        width: "100%", maxWidth: 540, maxHeight: "90vh", overflowY: "auto",
+        background: "rgba(255, 255, 255, 0.95)", backdropFilter: "blur(40px)",
+        borderRadius: 32, padding: "40px", border: "1px solid rgba(255,255,255,0.6)",
+        boxShadow: "0 24px 80px rgba(0,0,0,0.12), inset 0 0 0 1px rgba(255,255,255,0.5)"
       }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 32 }}>
-          <h2 style={{ fontFamily: "'Playfair Display',Georgia,serif", fontSize: 26, color: "var(--text-main)", fontWeight: 600 }}>Dietary Profile</h2>
-          <button onClick={onClose} style={{ background: "transparent", border: "1px solid var(--border)", borderRadius: "50%", padding: 8, cursor: "pointer", color: "var(--text-muted)", display: "flex", transition: "background 0.2s" }}
-            onMouseEnter={e => e.currentTarget.style.background = "var(--surface-hover)"}
-            onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 36 }}>
+          <div>
+            <h2 style={{ fontFamily: "'Playfair Display',Georgia,serif", fontSize: 32, color: "var(--text-main)", fontWeight: 700, lineHeight: 1.2, marginBottom: 6 }}>Taste Profile</h2>
+            <p style={{ color: "var(--text-muted)", fontSize: 15, margin: 0 }}>Personalize your culinary experience</p>
+          </div>
+          <button onClick={onClose} style={{
+            background: "rgba(0,0,0,0.04)", border: "none", borderRadius: "50%",
+            width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: "pointer", color: "var(--text-main)", transition: "all 0.2s"
+          }}
+            onMouseEnter={e => { e.currentTarget.style.background = "rgba(0,0,0,0.08)"; e.currentTarget.style.transform = "scale(1.05)"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "rgba(0,0,0,0.04)"; e.currentTarget.style.transform = "scale(1)"; }}
           ><IcX /></button>
         </div>
 
-        <div style={{ marginBottom: 22 }}>
+        <div style={{ marginBottom: 28 }}>
           <label style={labelStyle}>❤️ Dishes you love</label>
           <input value={liked} onChange={e => setLiked(e.target.value)} placeholder="e.g. Tagine, Couscous, Bastilla" style={fieldStyle}
-            onFocus={e => e.target.style.borderColor = "var(--accent)"} onBlur={e => e.target.style.borderColor = "var(--border)"} />
-          <p style={{ fontSize: 12, color: "var(--text-hint)", marginTop: 6 }}>Comma-separated values</p>
+            onFocus={e => { e.target.style.borderColor = "var(--accent)"; e.target.style.boxShadow = "0 0 0 4px var(--accent-light)"; e.target.style.background = "#fff"; }}
+            onBlur={e => { e.target.style.borderColor = "rgba(0,0,0,0.06)"; e.target.style.boxShadow = "none"; e.target.style.background = "rgba(0,0,0,0.02)"; }} />
         </div>
 
-        <div style={{ marginBottom: 22 }}>
+        <div style={{ marginBottom: 28 }}>
           <label style={labelStyle}>🚫 Dishes you avoid</label>
           <input value={disliked} onChange={e => setDisliked(e.target.value)} placeholder="e.g. Tripe, Liver" style={fieldStyle}
-            onFocus={e => e.target.style.borderColor = "var(--accent)"} onBlur={e => e.target.style.borderColor = "var(--border)"} />
+            onFocus={e => { e.target.style.borderColor = "var(--accent)"; e.target.style.boxShadow = "0 0 0 4px var(--accent-light)"; e.target.style.background = "#fff"; }}
+            onBlur={e => { e.target.style.borderColor = "rgba(0,0,0,0.06)"; e.target.style.boxShadow = "none"; e.target.style.background = "rgba(0,0,0,0.02)"; }} />
         </div>
 
-        <div style={{ marginBottom: 22 }}>
+        <div style={{ marginBottom: 28 }}>
           <label style={labelStyle}>🌿 Dietary requirements</label>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            {DIETARY_OPTS.map(opt => (
-              <button key={opt} onClick={() => toggle(opt)} style={{
-                padding: "8px 16px", borderRadius: 20, border: "1px solid",
-                borderColor: dietary.includes(opt) ? "var(--accent)" : "var(--border)",
-                background: dietary.includes(opt) ? "var(--accent)" : "var(--bg)",
-                color: dietary.includes(opt) ? "#fff" : "var(--text-main)",
-                cursor: "pointer", fontSize: 13, fontWeight: 500, fontFamily: "inherit", transition: "all .2s cubic-bezier(0.16, 1, 0.3, 1)",
-                boxShadow: dietary.includes(opt) ? "0 4px 12px var(--accent-glow)" : "none",
-              }}>{opt}</button>
-            ))}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+            {DIETARY_OPTS.map(opt => {
+              const active = dietary.includes(opt);
+              return (
+                <button key={opt} onClick={() => toggle(opt)} style={{
+                  padding: "10px 18px", borderRadius: 24, border: "1px solid",
+                  borderColor: active ? "var(--accent)" : "rgba(0,0,0,0.08)",
+                  background: active ? "var(--accent)" : "#fff",
+                  color: active ? "#fff" : "var(--text-muted)",
+                  cursor: "pointer", fontSize: 14, fontWeight: 600, fontFamily: "inherit",
+                  transition: "all .3s cubic-bezier(0.16, 1, 0.3, 1)",
+                  boxShadow: active ? "0 6px 16px var(--accent-glow)" : "0 2px 6px rgba(0,0,0,0.02)",
+                }}
+                  onMouseEnter={e => !active && (e.currentTarget.style.borderColor = "rgba(0,0,0,0.2)")}
+                  onMouseLeave={e => !active && (e.currentTarget.style.borderColor = "rgba(0,0,0,0.08)")}
+                >{opt}</button>
+              );
+            })}
           </div>
         </div>
 
-        <div style={{ marginBottom: 32 }}>
+        <div style={{ marginBottom: 40 }}>
           <label style={labelStyle}>✍️ Flavor notes</label>
           <textarea value={notes} onChange={e => setNotes(e.target.value)}
             placeholder="e.g. I love spicy food, prefer mild cumin, no coriander…"
             rows={3} style={{ ...fieldStyle, resize: "vertical" }}
-            onFocus={e => e.target.style.borderColor = "var(--accent)"} onBlur={e => e.target.style.borderColor = "var(--border)"}
+            onFocus={e => { e.target.style.borderColor = "var(--accent)"; e.target.style.boxShadow = "0 0 0 4px var(--accent-light)"; e.target.style.background = "#fff"; }}
+            onBlur={e => { e.target.style.borderColor = "rgba(0,0,0,0.06)"; e.target.style.boxShadow = "none"; e.target.style.background = "rgba(0,0,0,0.02)"; }}
           />
         </div>
 
-        <div style={{ display: "flex", gap: 12 }}>
+        <div style={{ display: "flex", gap: 16 }}>
           <button onClick={onClose} style={{
-            flex: 1, padding: 14, background: "#fff", border: "1px solid var(--border)",
-            borderRadius: 14, cursor: "pointer", color: "var(--text-main)", fontFamily: "inherit", fontSize: 14, fontWeight: 500,
-            transition: "background 0.2s"
-          }} onMouseEnter={e => e.currentTarget.style.background = "var(--surface-hover)"} onMouseLeave={e => e.currentTarget.style.background = "#fff"}>Cancel</button>
+            flex: 1, padding: "16px", background: "rgba(0,0,0,0.04)", border: "none",
+            borderRadius: 16, cursor: "pointer", color: "var(--text-main)", fontFamily: "inherit", fontSize: 15, fontWeight: 600,
+            transition: "all 0.2s"
+          }} onMouseEnter={e => e.currentTarget.style.background = "rgba(0,0,0,0.08)"} onMouseLeave={e => e.currentTarget.style.background = "rgba(0,0,0,0.04)"}>Cancel</button>
 
           <button onClick={save} disabled={saving} style={{
-            flex: 2, padding: 14, background: "var(--accent)", border: "none",
-            borderRadius: 14, cursor: "pointer", color: "#fff", fontFamily: "inherit",
-            fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-            boxShadow: "0 4px 16px var(--accent-glow)", transition: "all 0.2s"
-          }} onMouseEnter={e => !saving && (e.currentTarget.style.background = "var(--accent-hover)")} onMouseLeave={e => !saving && (e.currentTarget.style.background = "var(--accent)")}>
+            flex: 2, padding: "16px", background: "linear-gradient(135deg, var(--accent) 0%, #C9956B 100%)", border: "none",
+            borderRadius: 16, cursor: "pointer", color: "#fff", fontFamily: "inherit",
+            fontSize: 15, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+            boxShadow: "0 8px 24px var(--accent-glow)", transition: "all 0.3s"
+          }}
+            onMouseEnter={e => !saving && (e.currentTarget.style.transform = "translateY(-2px)", e.currentTarget.style.boxShadow = "0 12px 32px var(--accent-glow)")}
+            onMouseLeave={e => !saving && (e.currentTarget.style.transform = "none", e.currentTarget.style.boxShadow = "0 8px 24px var(--accent-glow)")}>
             {saving ? <><span className="spin"><IcLoader /></span> Saving…</> : "Save Preferences"}
           </button>
         </div>
@@ -810,7 +829,7 @@ function LandingPage({ onStartCooking, onCreateAccount }) {
   useScrollReveal();
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg)", position: "relative", overflowX: "hidden", overflowY: "auto" }}>
+    <div style={{ background: "var(--bg)", position: "relative", overflowX: "hidden" }}>
 
       {/* ═══════════════ NAVBAR ═══════════════ */}
       <nav style={{
@@ -903,7 +922,7 @@ function LandingPage({ onStartCooking, onCreateAccount }) {
 
       {/* ═══════════════ CAPABILITIES ═══════════════ */}
       <section id="capabilities" className="landing-section" style={{ padding: "100px 48px", maxWidth: 1200, margin: "0 auto" }}>
-        <div style={{ textAlign: "center", marginBottom: 64 }}>
+        <div style={{ textAlign: "center", marginBottom: 64, position: "relative" }}>
           <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "var(--accent-light)", padding: "6px 18px", borderRadius: 20, marginBottom: 20 }}>
             <span style={{ fontSize: 12, color: "var(--accent)", fontWeight: 700, letterSpacing: "0.06em" }}>POWERED BY 6 AI AGENTS</span>
           </div>
@@ -913,6 +932,7 @@ function LandingPage({ onStartCooking, onCreateAccount }) {
           <p style={{ fontSize: 17, color: "var(--text-muted)", maxWidth: 600, margin: "0 auto", lineHeight: 1.7 }}>
             From discovering recipes to calculating nutrition and market prices — everything happens in one intelligent conversation.
           </p>
+          <a href="#" style={{ position: "absolute", top: 0, right: 0, display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 20, border: "1px solid var(--border)", textDecoration: "none", color: "var(--text-muted)", fontSize: 14, fontWeight: 600, transition: "all 0.2s" }} onMouseEnter={e => e.currentTarget.style.background = "#fff"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>↑ Back</a>
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 24 }}>
@@ -944,7 +964,7 @@ function LandingPage({ onStartCooking, onCreateAccount }) {
       {/* ═══════════════ HOW IT WORKS ═══════════════ */}
       <section id="how-it-works" className="landing-section" style={{ padding: "100px 48px", background: "linear-gradient(180deg, rgba(37,27,21,0.03) 0%, rgba(37,27,21,0) 100%)" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: 64 }}>
+          <div style={{ textAlign: "center", marginBottom: 64, position: "relative" }}>
             <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(0,122,94,0.08)", padding: "6px 18px", borderRadius: 20, marginBottom: 20 }}>
               <span style={{ fontSize: 12, color: "var(--green)", fontWeight: 700, letterSpacing: "0.06em" }}>MULTI-AGENT PIPELINE</span>
             </div>
@@ -954,6 +974,7 @@ function LandingPage({ onStartCooking, onCreateAccount }) {
             <p style={{ fontSize: 17, color: "var(--text-muted)", maxWidth: 600, margin: "0 auto", lineHeight: 1.7 }}>
               Behind every recipe, 6 specialized AI agents collaborate to deliver a perfect result — automatically.
             </p>
+            <a href="#" style={{ position: "absolute", top: 0, right: 0, display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 20, border: "1px solid var(--border)", textDecoration: "none", color: "var(--text-muted)", fontSize: 14, fontWeight: 600, transition: "all 0.2s" }} onMouseEnter={e => e.currentTarget.style.background = "#fff"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>↑ Back</a>
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 16, position: "relative" }}>
@@ -997,7 +1018,7 @@ function LandingPage({ onStartCooking, onCreateAccount }) {
 
       {/* ═══════════════ DISH SHOWCASE ═══════════════ */}
       <section id="dishes" className="landing-section" style={{ padding: "100px 48px", maxWidth: 1200, margin: "0 auto" }}>
-        <div style={{ textAlign: "center", marginBottom: 64 }}>
+        <div style={{ textAlign: "center", marginBottom: 64, position: "relative" }}>
           <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(193,18,31,0.08)", padding: "6px 18px", borderRadius: 20, marginBottom: 20 }}>
             <span style={{ fontSize: 12, color: "var(--red)", fontWeight: 700, letterSpacing: "0.06em" }}>TRADITIONAL MOROCCAN</span>
           </div>
@@ -1007,6 +1028,7 @@ function LandingPage({ onStartCooking, onCreateAccount }) {
           <p style={{ fontSize: 17, color: "var(--text-muted)", maxWidth: 560, margin: "0 auto", lineHeight: 1.7 }}>
             Start your journey with these beloved Moroccan classics — each one a gateway to centuries of culinary tradition.
           </p>
+          <a href="#" style={{ position: "absolute", top: 0, right: 0, display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 20, border: "1px solid var(--border)", textDecoration: "none", color: "var(--text-muted)", fontSize: 14, fontWeight: 600, transition: "all 0.2s" }} onMouseEnter={e => e.currentTarget.style.background = "#fff"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>↑ Back</a>
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 28 }}>
@@ -1478,13 +1500,13 @@ export default function KitchenApp() {
             </div>
             <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 2 }}>Always ready to cook and inspire</div>
           </div>
-            <button onClick={() => setShowPrefs(true)} style={{
-              padding: "8px 16px", borderRadius: 20, background: "#fff", border: "1px solid var(--border-strong)",
-              cursor: "pointer", color: "var(--red)", display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600, fontFamily: "inherit", transition: "background 0.2s"
-            }} onMouseEnter={e => e.currentTarget.style.background = "#fafafa"} onMouseLeave={e => e.currentTarget.style.background = "#fff"}>
-              <IcHeart f={prefs.liked?.length > 0} /> Profile
-            </button>
-          </div>
+          <button onClick={() => setShowPrefs(true)} style={{
+            padding: "8px 16px", borderRadius: 20, background: "#fff", border: "1px solid var(--border-strong)",
+            cursor: "pointer", color: "var(--red)", display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600, fontFamily: "inherit", transition: "background 0.2s"
+          }} onMouseEnter={e => e.currentTarget.style.background = "#fafafa"} onMouseLeave={e => e.currentTarget.style.background = "#fff"}>
+            <IcHeart f={prefs.liked?.length > 0} /> Profile
+          </button>
+        </div>
 
         {/* Messages */}
         <div style={{ flex: 1, overflowY: "auto", padding: "40px 32px 16px" }}>
