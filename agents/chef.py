@@ -36,8 +36,7 @@ Dietary constraints  : {dietary}
 Critic feedback      : {critic_notes}
 Web reference        : {web_ref}
 
-Produce an authentic Moroccan recipe. Use traditional Moroccan spice names
-(ras el hanout, chermoula, preserved lemon, argan oil, etc.) where appropriate.
+Produce an authentic Moroccan recipe.
 Include cultural context and Moroccan accompaniments.
 
 Reply with a JSON object (no markdown) with these exact keys:
@@ -208,81 +207,120 @@ def chef_agent(state: KitchenState) -> KitchenState:
 
     # ── Price lookup ──────────────────────────────────────────────────────────
     try:
-        import re
-        def calc_price(ing_dict, price_info):
-            base_price = price_info.get("price_mad", 0)
-            if not base_price: return 0
-            
-            qty_str = str(ing_dict.get("quantity", ing_dict.get("amount", "1")))
-            p_unit = price_info.get("unit", "kg").lower()
-            
-            match = re.search(r'(\d+(?:\.\d+)?)', qty_str)
-            if not match: return base_price * 0.1
-            val = float(match.group(1))
-            
-            qty_lower = qty_str.lower()
-            
-            if p_unit == "kg":
-                if 'mg' in qty_lower:
-                    return base_price * (val / 1000000.0)
-                elif 'g' in qty_lower and 'kg' not in qty_lower:
-                    return base_price * (val / 1000.0)
-                elif 'kg' in qty_lower or 'kilo' in qty_lower:
-                    return base_price * val
-                elif 'tbsp' in qty_lower or 'tablespoon' in qty_lower or 'c. à soupe' in qty_lower or 'cuillère à soupe' in qty_lower:
-                    return base_price * (val * 0.015)
-                elif 'tsp' in qty_lower or 'teaspoon' in qty_lower or 'c. à café' in qty_lower or 'cuillère à café' in qty_lower:
-                    return base_price * (val * 0.005)
-                elif 'cup' in qty_lower:
-                    return base_price * (val * 0.25)
-                elif 'pinch' in qty_lower or 'pincée' in qty_lower:
-                    return base_price * 0.001
-                else:
-                    if val < 20 and not any(u in qty_lower for u in ['g', 'kg', 'l', 'ml']):
-                        return base_price * (val * 0.1)
-                    return base_price * val
-            elif p_unit in ["litre", "liter", "l"]:
-                if 'ml' in qty_lower:
-                    return base_price * (val / 1000.0)
-                elif 'l' in qty_lower.split() or 'liter' in qty_lower or 'litre' in qty_lower:
-                    return base_price * val
-                elif 'cup' in qty_lower:
-                    return base_price * (val * 0.25)
-                elif 'tbsp' in qty_lower or 'c. à soupe' in qty_lower or 'cuillère à soupe' in qty_lower:
-                    return base_price * (val * 0.015)
-                else:
-                    return base_price * val
-            else:
-                return base_price * val
+        ingredients_list = recipe.get("ingredients", [])
 
-        ingredient_names = [
+        # Build a map: original_name → english_name for matching
+        original_names = [
             ing.get("item", ing.get("name", ""))
-            for ing in recipe.get("ingredients", [])
+            for ing in ingredients_list
             if isinstance(ing, dict)
         ]
-        if ingredient_names:
-            raw_prices = get_ingredient_prices.invoke({"ingredients": ingredient_names})
-            prices     = json.loads(raw_prices)["prices"]
-            total      = 0.0
-            for ing in recipe.get("ingredients", []):
-                if isinstance(ing, dict):
-                    # Strip out any hallucinated price properties
-                    for k in ["price", "total_price", "cost", "price_mad"]:
-                        if k in ing:
-                            del ing[k]
 
-                    name = ing.get("item", ing.get("name", ""))
-                    if name in prices:
-                        p_info = prices[name]
-                        calculated = calc_price(ing, p_info)
-                        ing["calculated_price"] = round(calculated, 2)
-                        ing["price_info"] = p_info
-                        total += calculated
-            
-            recipe["total_price"] = {"amount": round(total, 2), "currency": "MAD"}
-            
-    except Exception as e:
-        print(f"Price calculation error: {e}")
+        # Normalize non-English names to English for price table lookup
+        english_names = original_names
+        if original_names:
+            try:
+                norm_resp = _llm.invoke([
+                    SystemMessage(content=(
+                        "Translate each ingredient name to its simple English equivalent "
+                        "(e.g. 'tomates mûres' → 'tomato', 'طماطم' → 'tomato', 'poulet' → 'chicken'). "
+                        "Reply ONLY with a JSON array of strings in the same order as the input. "
+                        "No markdown, no explanation."
+                    )),
+                    HumanMessage(content=json.dumps(original_names, ensure_ascii=False)),
+                ])
+                norm_text = norm_resp.content.strip()
+                if norm_text.startswith("```"):
+                    norm_text = norm_text.split("```")[1]
+                    if norm_text.lower().startswith("json"):
+                        norm_text = norm_text[4:]
+                parsed_names = json.loads(norm_text.strip())
+                if isinstance(parsed_names, list) and len(parsed_names) == len(original_names):
+                    english_names = parsed_names
+            except Exception:
+                pass  # fall back to original names
+
+        # Fetch prices using (possibly translated) English names
+        raw_prices = get_ingredient_prices.invoke({"ingredients": english_names})
+        prices = json.loads(raw_prices)["prices"]
+
+        # Ask LLM to convert each recipe quantity to grams (or units for countable items)
+        # so we can compute a proportional cost from the per-kg price.
+        qty_list = [
+            {"ingredient": original_names[i], "quantity": ing.get("quantity", "")}
+            for i, ing in enumerate(ingredients_list)
+            if isinstance(ing, dict)
+        ]
+        gram_weights = {}
+        try:
+            qty_resp = _llm.invoke([
+                SystemMessage(content=(
+                    "For each ingredient and its recipe quantity, return the amount in grams "
+                    "(or whole units for countable items like eggs). "
+                    "Rules:\n"
+                    "- Countable items (eggs, onions, garlic cloves, lemons…): return the COUNT as a number, set unit='unit'\n"
+                    "- Liquids (oil, water, milk…): 1 tablespoon=14g, 1 teaspoon=5g, 1 cup=240g\n"
+                    "- Ground spices: 1 teaspoon≈3g, 1 tablespoon≈8g, 1 pinch≈0.5g\n"
+                    "- Vegetables/meat: convert to grams (1 medium tomato≈150g, 1 medium onion≈120g)\n"
+                    "Reply ONLY with a JSON array in the same order as the input, each item: "
+                    "{\"ingredient\": \"...\", \"amount\": <number>, \"unit\": \"g\" or \"unit\"}. "
+                    "No markdown, no explanation."
+                )),
+                HumanMessage(content=json.dumps(qty_list, ensure_ascii=False)),
+            ])
+            qty_text = qty_resp.content.strip()
+            if qty_text.startswith("```"):
+                qty_text = qty_text.split("```")[1]
+                if qty_text.lower().startswith("json"):
+                    qty_text = qty_text[4:]
+            parsed_qty = json.loads(qty_text.strip())
+            if isinstance(parsed_qty, list) and len(parsed_qty) == len(original_names):
+                for item in parsed_qty:
+                    gram_weights[item["ingredient"]] = {
+                        "amount": item.get("amount", 0),
+                        "unit": item.get("unit", "g"),
+                    }
+        except Exception:
+            pass
+
+        # Attach "calculated_price" as a proportional cost for the recipe quantity
+        for i, ing in enumerate(ingredients_list):
+            if not isinstance(ing, dict):
+                continue
+            orig_name   = original_names[i]
+            lookup_name = english_names[i] if i < len(english_names) else orig_name
+            price_entry = prices.get(lookup_name, {})
+            price_mad   = price_entry.get("price_mad")   # price per kg (or per unit if unit=='unit')
+            table_unit  = price_entry.get("unit", "kg")
+
+            if price_mad is None:
+                ing["calculated_price"] = None
+                continue
+
+            qty_info = gram_weights.get(orig_name)
+            if not qty_info:
+                # No quantity info — fall back to showing the catalogue unit price
+                ing["calculated_price"] = f"~{price_mad:.0f} MAD/{table_unit}"
+                continue
+
+            amount = qty_info.get("amount", 0)
+            unit   = qty_info.get("unit", "g")
+
+            try:
+                if unit == "unit" or table_unit == "unit":
+                    # Countable items: price is per unit
+                    cost = price_mad * amount
+                else:
+                    # Weight-based: price_mad is per kg, amount is in grams
+                    cost = price_mad * (amount / 1000)
+
+                if cost < 0.5:
+                    ing["calculated_price"] = "< 1 MAD"
+                else:
+                    ing["calculated_price"] = f"~{cost:.1f} MAD"
+            except Exception:
+                ing["calculated_price"] = f"~{price_mad:.0f} MAD/{table_unit}"
+    except Exception:
         pass
 
     return {

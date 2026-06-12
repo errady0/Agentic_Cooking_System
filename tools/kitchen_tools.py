@@ -143,37 +143,50 @@ _PRICE_TABLE_MAD: dict[str, dict] = ingredients_price
 def _search_price(ingredient: str) -> Optional[dict]:
     """
     Try to get a live Moroccan price via Tavily web search.
-    Returns {price_mad, unit, source} or None if search unavailable/failed.
+    Only called for ingredients NOT found in the price table.
+    Returns {price_mad, unit, source} or None on failure.
     """
     if not settings.TAVILY_API_KEY:
         return None
     try:
         from tavily import TavilyClient
         client = TavilyClient(api_key=settings.TAVILY_API_KEY)
-        query = f"prix {ingredient} maroc marché 2026 dirham kg"
+        query = f"prix {ingredient} maroc marché dirham kg"
         response = client.search(query=query, max_results=3, search_depth="basic")
 
-        # Try to extract a price from the answer or first result
         text = response.get("answer", "")
         if not text and response.get("results"):
             text = response["results"][0].get("content", "")
 
-        # Look for patterns like "15 MAD", "15 DH", "15 dirhams"
+        # Only match explicit "X MAD/DH" patterns — avoid grabbing years or quantities
         patterns = [
-            r"(\d+(?:\.\d+)?)\s*(?:MAD|DH|dirham|درهم)",
+            r"(\d+(?:\.\d+)?)\s*(?:MAD|DH|dirham|درهم)\s*(?:le\s+)?(?:kg|kilo|litre|l\b|pièce|unité)",
+            r"(?:kg|kilo|litre)\s*[:\-à]\s*(\d+(?:\.\d+)?)\s*(?:MAD|DH|dirham)",
             r"(\d+(?:\.\d+)?)\s*(?:MAD|DH)",
-            r"prix[^\d]*(\d+(?:\.\d+)?)",
         ]
+
+        _PER_UNIT_ITEMS = {
+            "egg", "eggs", "oeuf", "oeufs", "بيض",
+            "lemon", "lemons", "citron", "citrons", "ليمون",
+            "orange", "oranges", "avocado", "avocados", "avocat",
+        }
+        is_per_unit = any(w in ingredient.lower() for w in _PER_UNIT_ITEMS)
+
+        # Use price table as a sanity bound — web result must be within 5× of table value
+        table_entry = _fallback_price(ingredient)
+        table_price = table_entry.get("price_mad")
+        lo = (table_price / 5) if table_price else 1
+        hi = (table_price * 5) if table_price else 500
+
         for pattern in patterns:
             match = re.search(pattern, text, re.IGNORECASE)
             if match:
                 price = float(match.group(1))
-                if 0.5 < price < 1000:  # sanity check
+                if lo < price < hi:
                     return {
                         "price_mad": price,
-                        "unit": "kg",
+                        "unit": "unit" if is_per_unit else "kg",
                         "source": "web search (Tavily)",
-                        "raw_snippet": text[:200],
                     }
     except Exception:
         pass
@@ -219,21 +232,16 @@ def get_ingredient_prices(ingredients: list[str]) -> str:
     Example input: ["chicken", "onion", "cumin", "olive oil"]
     """
     results = {}
-    total_found = 0
-    found_count = 0
 
     for ingredient in ingredients:
-        # Try live search first
-        live = _search_price(ingredient)
-        if live:
-            results[ingredient] = live
+        # Price table is the primary source (verified accurate Moroccan prices)
+        table = _fallback_price(ingredient)
+        if table.get("price_mad") is not None:
+            results[ingredient] = table
         else:
-            results[ingredient] = _fallback_price(ingredient)
-
-        price = results[ingredient].get("price_mad")
-        if price is not None:
-            total_found += price
-            found_count += 1
+            # Only hit web search for ingredients not in our table
+            live = _search_price(ingredient)
+            results[ingredient] = live if live else table  # table has the "not found" structure
 
     return json.dumps({
         "prices": results,

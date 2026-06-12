@@ -35,7 +35,7 @@ It should quietly shape and color your recommendations, not dominate them. Concr
 Additional context from web search: {web_context}
 
 Reply with a JSON array (no markdown) where each item has:
-  "name"        : dish name in user_language (Darija if known)
+  "name"        : dish name in user_language
   "description" : 2-sentence description
   "why"         : why this matches the user's preferences
   "difficulty"  : easy / medium / hard
@@ -55,7 +55,7 @@ def recommendation_agent(state: KitchenState) -> KitchenState:
         items = json.loads(result)
         web_context = " | ".join(i.get("content", "")[:200] for i in items[:3])
     except Exception:
-        web_context = "Not available"
+            web_context = "Not available"
 
     messages = [
         SystemMessage(content=_SYSTEM.format(

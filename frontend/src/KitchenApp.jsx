@@ -60,6 +60,9 @@ const theme = `
     to   { opacity: 1; transform: none; }
   }
   @keyframes shimmer { 0%,100% { opacity:.5; } 50% { opacity:1; } }
+  @keyframes floatSlow { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+  @keyframes floatMedium { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+  @keyframes floatFast { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
 
   .spin     { animation: spin .85s linear infinite; display: inline-block; }
   .fade-up  { animation: fadeUp .35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
@@ -114,6 +117,16 @@ const theme = `
   .markdown-body strong {
     color: var(--text-main);
     font-weight: 600;
+  }
+  
+  /* Professionally highlight the dish title at the beginning of the response */
+  .markdown-body > p:first-of-type > strong:first-child {
+    font-family: 'Playfair Display', Georgia, serif;
+    color: var(--accent);
+    font-size: 1.4em;
+    font-weight: 600;
+    display: inline-block;
+    margin-bottom: 0.3em;
   }
   .markdown-body em {
     color: var(--text-muted);
@@ -182,8 +195,8 @@ const IcLoader = () => (
 );
 
 // ── Auth Screen ───────────────────────────────────────────────────────────────
-function AuthScreen({ onAuth }) {
-  const [mode, setMode] = useState("login");
+function AuthScreen({ onAuth, initialMode = "login" }) {
+  const [mode, setMode] = useState(initialMode);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -214,24 +227,24 @@ function AuthScreen({ onAuth }) {
   };
 
   return (
-    <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:"var(--bg)" }}>
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg)" }}>
       <div className="card fade-up" style={{ width: 420, padding: "44px 40px", borderRadius: 24 }}>
-        <div style={{ textAlign:"center", marginBottom:32 }}>
-          <div style={{ fontSize:48, marginBottom:14 }}>🫕</div>
-          <h1 style={{ fontFamily:"'Playfair Display',Georgia,serif", fontSize:32, color:"var(--text-main)", marginBottom:6, fontWeight:600, letterSpacing:"0.01em" }}>Kitchen AI</h1>
-          <p style={{ color:"var(--text-muted)", fontSize:14 }}>Your Moroccan culinary guide</p>
+        <div style={{ textAlign: "center", marginBottom: 32 }}>
+          <div style={{ fontSize: 48, marginBottom: 14 }}>🫕</div>
+          <h1 style={{ fontFamily: "'Playfair Display',Georgia,serif", fontSize: 32, color: "var(--text-main)", marginBottom: 6, fontWeight: 600, letterSpacing: "0.01em" }}>ATLAS KITCHEN</h1>
+          <p style={{ color: "var(--text-muted)", fontSize: 14 }}>Your Moroccan culinary guide</p>
         </div>
 
         {/* Tabs */}
-        <div style={{ display:"flex", background:"var(--bg)", borderRadius:10, padding:4, marginBottom:24, border:"1px solid var(--border)" }}>
+        <div style={{ display: "flex", background: "var(--bg)", borderRadius: 10, padding: 4, marginBottom: 24, border: "1px solid var(--border)" }}>
           {["login", "register"].map(m => (
             <button key={m} onClick={() => { setMode(m); setError(""); }} style={{
-              flex:1, padding:"9px", border:"none", borderRadius:8, cursor:"pointer",
-              fontFamily:"inherit", fontSize:14, fontWeight:600,
-              background: mode===m ? "#fff" : "transparent",
-              color: mode===m ? "var(--accent)" : "var(--text-muted)",
-              boxShadow: mode===m ? "0 1px 4px rgba(26,18,11,0.10)" : "none",
-              transition:"all .2s",
+              flex: 1, padding: "9px", border: "none", borderRadius: 8, cursor: "pointer",
+              fontFamily: "inherit", fontSize: 14, fontWeight: 600,
+              background: mode === m ? "#fff" : "transparent",
+              color: mode === m ? "var(--accent)" : "var(--text-muted)",
+              boxShadow: mode === m ? "0 1px 4px rgba(26,18,11,0.10)" : "none",
+              transition: "all .2s",
             }}>
               {m === "login" ? "Sign In" : "Create Account"}
             </button>
@@ -260,11 +273,11 @@ function AuthScreen({ onAuth }) {
         {error && <p style={{ color: "var(--red)", fontSize: 13, textAlign: "center", margin: "8px 0 12px" }}>{error}</p>}
 
         <button onClick={submit} disabled={loading} style={{
-          width:"100%", padding:"13px", marginTop:10, background:"var(--accent)", border:"none",
-          borderRadius:12, cursor:loading?"not-allowed":"pointer", color:"#fff",
-          fontFamily:"inherit", fontSize:15, fontWeight:600, letterSpacing:"0.01em",
-          display:"flex", alignItems:"center", justifyContent:"center", gap:8,
-          opacity: loading ? 0.85 : 1, transition:"all .2s",
+          width: "100%", padding: "13px", marginTop: 10, background: "var(--accent)", border: "none",
+          borderRadius: 12, cursor: loading ? "not-allowed" : "pointer", color: "#fff",
+          fontFamily: "inherit", fontSize: 15, fontWeight: 600, letterSpacing: "0.01em",
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+          opacity: loading ? 0.85 : 1, transition: "all .2s",
           boxShadow: "0 3px 12px var(--accent-glow)",
         }}
           onMouseEnter={e => !loading && (e.currentTarget.style.background = "var(--accent-hover)")}
@@ -425,121 +438,121 @@ function RecipeCard({ recipe }) {
   };
   return (
     <div style={{ marginTop: 16, background: "var(--surface-card)", borderRadius: 16, border: "1px solid var(--border-strong)", overflow: "hidden", transition: "all 0.3s", boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
-        <button onClick={() => setOpen(!open)} style={{
-          width: "100%", padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between",
-          background: open ? "rgba(205, 108, 50, 0.05)" : "transparent", border: "none", cursor: "pointer",
-          color: "var(--text-main)", fontFamily: "inherit", fontSize: 15, fontWeight: 600, transition: "background 0.2s"
-        }} onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"} onMouseLeave={e => e.currentTarget.style.background = open ? "rgba(255,255,255,0.03)" : "transparent"}>
-          <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontSize: 18 }}>📋</span> {recipe.name || recipe.title || "Recipe Overview"}
-            {recipe.servings && <span style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 400 }}>· {recipe.servings} servings</span>}
-          </span>
-          <span style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform .3s cubic-bezier(0.16, 1, 0.3, 1)", display: "flex", color: "var(--accent)" }}><IcChevron /></span>
-        </button>
+      <button onClick={() => setOpen(!open)} style={{
+        width: "100%", padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between",
+        background: open ? "rgba(205, 108, 50, 0.05)" : "transparent", border: "none", cursor: "pointer",
+        color: "var(--text-main)", fontFamily: "inherit", fontSize: 15, fontWeight: 600, transition: "background 0.2s"
+      }} onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"} onMouseLeave={e => e.currentTarget.style.background = open ? "rgba(255,255,255,0.03)" : "transparent"}>
+        <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontSize: 18 }}>📋</span> {recipe.name || recipe.title || "Recipe Overview"}
+          {recipe.servings && <span style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 400 }}>· {recipe.servings} servings</span>}
+        </span>
+        <span style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform .3s cubic-bezier(0.16, 1, 0.3, 1)", display: "flex", color: "var(--accent)" }}><IcChevron /></span>
+      </button>
 
-        {open && (
-          <div style={{ padding: "20px", fontSize: 14, color: "var(--text-main)", lineHeight: 1.7, borderTop: "1px solid var(--border-strong)", background: "var(--bg)" }}>
+      {open && (
+        <div style={{ padding: "20px", fontSize: 14, color: "var(--text-main)", lineHeight: 1.7, borderTop: "1px solid var(--border-strong)", background: "var(--bg)" }}>
 
-            {/* Cultural note */}
-            {recipe.cultural_note && (
-              <div style={{ background: "rgba(200,112,40,0.08)", padding: "12px 16px", borderRadius: 12, marginBottom: 20, border: "1px solid rgba(200, 104, 50, 0.2)" }}>
-                <p style={{ color: "var(--accent)", fontStyle: "italic", fontSize: 13 }}>📖 {recipe.cultural_note}</p>
-              </div>
-            )}
+          {/* Cultural note */}
+          {recipe.cultural_note && (
+            <div style={{ background: "rgba(200,112,40,0.08)", padding: "12px 16px", borderRadius: 12, marginBottom: 20, border: "1px solid rgba(200, 104, 50, 0.2)" }}>
+              <p style={{ color: "var(--accent)", fontStyle: "italic", fontSize: 13 }}>📖 {recipe.cultural_note}</p>
+            </div>
+          )}
 
-            {/* Moroccan adaptations (for moroccan_twist style) */}
-            {adaptationsArray.length > 0 && (
-              <div style={{ marginBottom: 24 }}>
-                <strong style={sectionLabel}>🌿 Moroccan Adaptations</strong>
-                <ul style={{ paddingLeft: 0, margin: 0, listStyle: "none" }}>
-                  {adaptationsArray.map((adapt, i) => (
-                    <li key={i} style={{ marginBottom: 6, display: "flex", alignItems: "flex-start", gap: 8 }}>
-                      <span style={{ color: "var(--accent)", flexShrink: 0 }}>✦</span>
-                      <span style={{ color: "var(--text-muted)" }}>{typeof adapt === "object" ? JSON.stringify(adapt) : String(adapt)}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+          {/* Moroccan adaptations (for moroccan_twist style) */}
+          {adaptationsArray.length > 0 && (
+            <div style={{ marginBottom: 24 }}>
+              <strong style={sectionLabel}>🌿 Moroccan Adaptations</strong>
+              <ul style={{ paddingLeft: 0, margin: 0, listStyle: "none" }}>
+                {adaptationsArray.map((adapt, i) => (
+                  <li key={i} style={{ marginBottom: 6, display: "flex", alignItems: "flex-start", gap: 8 }}>
+                    <span style={{ color: "var(--accent)", flexShrink: 0 }}>✦</span>
+                    <span style={{ color: "var(--text-muted)" }}>{typeof adapt === "object" ? JSON.stringify(adapt) : String(adapt)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
-            {/* Ingredients */}
-            {ingredientsArray.length > 0 && (
-              <div style={{ marginBottom: 24 }}>
-                <strong style={sectionLabel}>🛒 Ingredients</strong>
-                <ul style={{ paddingLeft: 0, margin: 0, listStyle: "none" }}>
-                  {ingredientsArray.map((ing, i) => (
-                    <li key={i} style={{ marginBottom: 8, display: "flex", alignItems: "flex-start", gap: 8 }}>
-                      <span style={{ color: "var(--accent)", flexShrink: 0 }}>•</span>
-                      <span>{renderIngredient(ing)}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+          {/* Ingredients */}
+          {ingredientsArray.length > 0 && (
+            <div style={{ marginBottom: 24 }}>
+              <strong style={sectionLabel}>🛒 Ingredients</strong>
+              <ul style={{ paddingLeft: 0, margin: 0, listStyle: "none" }}>
+                {ingredientsArray.map((ing, i) => (
+                  <li key={i} style={{ marginBottom: 8, display: "flex", alignItems: "flex-start", gap: 8 }}>
+                    <span style={{ color: "var(--accent)", flexShrink: 0 }}>•</span>
+                    <span>{renderIngredient(ing)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
-            {/* Cooking Steps */}
-            {stepsArray.length > 0 && (
-              <div style={{ marginBottom: 24 }}>
-                <strong style={sectionLabel}>👨‍🍳 Cooking Steps</strong>
-                <ol style={{ paddingLeft: 0, margin: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 12 }}>
-                  {stepsArray.map((step, i) => {
-                    if (!step) return null;
-                    if (typeof step === "string") {
-                      return (
-                        <li key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                          <span style={{ minWidth: 24, height: 24, borderRadius: "50%", background: "var(--accent)", color: "#fff", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{i + 1}</span>
-                          <span style={{ paddingTop: 2 }}>{step}</span>
-                        </li>
-                      );
-                    }
-                    const title = step.title || step.name || `Step ${step.step_number || i + 1}`;
-                    const instr = step.instruction || step.text || step.desc || "";
-                    const dur = step.duration_minutes ? `${step.duration_minutes} min` : null;
+          {/* Cooking Steps */}
+          {stepsArray.length > 0 && (
+            <div style={{ marginBottom: 24 }}>
+              <strong style={sectionLabel}>👨‍🍳 Cooking Steps</strong>
+              <ol style={{ paddingLeft: 0, margin: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 12 }}>
+                {stepsArray.map((step, i) => {
+                  if (!step) return null;
+                  if (typeof step === "string") {
                     return (
                       <li key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                        <span style={{ minWidth: 24, height: 24, borderRadius: "50%", background: "var(--accent)", color: "#fff", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 }}>
-                          {step.step_number || i + 1}
-                        </span>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
-                            <span style={{ fontWeight: 600, color: "var(--text-main)", fontSize: 13 }}>{title}</span>
-                            {dur && <span style={{ fontSize: 11, color: "var(--text-hint)", background: "rgba(0,0,0,0.06)", padding: "1px 8px", borderRadius: 10 }}>⏱ {dur}</span>}
-                          </div>
-                          {instr && <p style={{ margin: 0, color: "var(--text-muted)", fontSize: 13, lineHeight: 1.6 }}>{instr}</p>}
-                        </div>
+                        <span style={{ minWidth: 24, height: 24, borderRadius: "50%", background: "var(--accent)", color: "#fff", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{i + 1}</span>
+                        <span style={{ paddingTop: 2 }}>{step}</span>
                       </li>
                     );
-                  })}
-                </ol>
-              </div>
-            )}
-
-            {/* Chef Tips */}
-            {tipsArray.length > 0 && (
-              <div style={{ marginBottom: 20 }}>
-                <strong style={sectionLabel}>💡 Chef Tips</strong>
-                <ul style={{ paddingLeft: 0, margin: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
-                  {tipsArray.map((tip, i) => (
-                    <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, background: "rgba(0,0,0,0.03)", padding: "10px 14px", borderRadius: 10, border: "1px solid rgba(0,0,0,0.05)" }}>
-                      <span style={{ color: "var(--accent)", flexShrink: 0 }}>✦</span>
-                      <span style={{ color: "var(--text-muted)", fontSize: 13 }}>{typeof tip === "object" ? JSON.stringify(tip) : String(tip)}</span>
+                  }
+                  const title = step.title || step.name || `Step ${step.step_number || i + 1}`;
+                  const instr = step.instruction || step.text || step.desc || "";
+                  const dur = step.duration_minutes ? `${step.duration_minutes} min` : null;
+                  return (
+                    <li key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                      <span style={{ minWidth: 24, height: 24, borderRadius: "50%", background: "var(--accent)", color: "#fff", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 }}>
+                        {step.step_number || i + 1}
+                      </span>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
+                          <span style={{ fontWeight: 600, color: "var(--text-main)", fontSize: 13 }}>{title}</span>
+                          {dur && <span style={{ fontSize: 11, color: "var(--text-hint)", background: "rgba(0,0,0,0.06)", padding: "1px 8px", borderRadius: 10 }}>⏱ {dur}</span>}
+                        </div>
+                        {instr && <p style={{ margin: 0, color: "var(--text-muted)", fontSize: 13, lineHeight: 1.6 }}>{instr}</p>}
+                      </div>
                     </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+                  );
+                })}
+              </ol>
+            </div>
+          )}
 
-            {/* Pairing */}
-            {recipe.pairing && (
-              <div style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(200,112,40,0.06)", border: "1px solid rgba(200, 104, 50, 0.2)" }}>
-                <strong style={{ color: "var(--accent)", fontSize: 12, fontWeight: 700, display: "block", marginBottom: 4 }}>🍵 Suggested Pairing</strong>
-                <p style={{ margin: 0, color: "var(--text-muted)", fontSize: 13 }}>{recipe.pairing}</p>
-              </div>
-            )}
+          {/* Chef Tips */}
+          {tipsArray.length > 0 && (
+            <div style={{ marginBottom: 20 }}>
+              <strong style={sectionLabel}>💡 Chef Tips</strong>
+              <ul style={{ paddingLeft: 0, margin: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
+                {tipsArray.map((tip, i) => (
+                  <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, background: "rgba(0,0,0,0.03)", padding: "10px 14px", borderRadius: 10, border: "1px solid rgba(0,0,0,0.05)" }}>
+                    <span style={{ color: "var(--accent)", flexShrink: 0 }}>✦</span>
+                    <span style={{ color: "var(--text-muted)", fontSize: 13 }}>{typeof tip === "object" ? JSON.stringify(tip) : String(tip)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
-          </div>
-        )}
-      </div>
+          {/* Pairing */}
+          {recipe.pairing && (
+            <div style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(200,112,40,0.06)", border: "1px solid rgba(200, 104, 50, 0.2)" }}>
+              <strong style={{ color: "var(--accent)", fontSize: 12, fontWeight: 700, display: "block", marginBottom: 4 }}>🍵 Suggested Pairing</strong>
+              <p style={{ margin: 0, color: "var(--text-muted)", fontSize: 13 }}>{recipe.pairing}</p>
+            </div>
+          )}
+
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -644,21 +657,23 @@ function Bubble({ msg, onSend }) {
                 </div>
                 <div style={{ display: "flex", gap: 12 }}>
                   <button onClick={() => onSend && onSend("Classic")} style={{
-                    flex: 1, padding: "10px", borderRadius: 10, 
+                    flex: 1, padding: "10px", borderRadius: 10,
                     background: "var(--accent)",
                     border: "none",
                     color: "#fff",
-                    cursor: "pointer", 
-                    transition: "background 0.2s"}}>Classic
+                    cursor: "pointer",
+                    transition: "background 0.2s"
+                  }}>Classic
                   </button>
 
                   <button onClick={() => onSend && onSend("Moroccan Twist")} style={{
-                    flex: 1, padding: "10px", borderRadius: 10, 
-                    background: "var(--accent)", 
-                    border: "none", 
-                    color: "#fff", 
-                    cursor: "pointer", 
-                    transition: "background 0.2s"}}>Moroccan Twist
+                    flex: 1, padding: "10px", borderRadius: 10,
+                    background: "var(--accent)",
+                    border: "none",
+                    color: "#fff",
+                    cursor: "pointer",
+                    transition: "background 0.2s"
+                  }}>Moroccan Twist
                   </button>
                 </div>
               </div>
@@ -671,11 +686,77 @@ function Bubble({ msg, onSend }) {
 }
 
 // ── Main App ──────────────────────────────────────────────────────────────────
-const SUGGESTIONS = [
-  "🫕 Chicken tagine recipe", "🍚 Authentic couscous",
-  "🥗 Moroccan salad ideas", "🍕 I want pizza tonight",
-  "🧆 Best kefta recipe",    "🌿 Vegetarian Moroccan dish",
+const IMAGE_SUGGESTIONS = [
+  { title: "Chicken Tagine", img: "https://images.unsplash.com/photo-1541518763669-27fef04b14ea?auto=format&fit=crop&q=80&w=400" },
+  { title: "Royal Couscous", img: "https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&q=80&w=400" },
+  { title: "Sweet Pastilla", img: "https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&q=80&w=400" }
 ];
+
+function LandingPage({ onStartCooking, onCreateAccount }) {
+  return (
+    <div style={{ minHeight: "100vh", background: "var(--bg)", display: "flex", flexDirection: "column", position: "relative", overflowX: "hidden", overflowY: "auto" }}>
+      {/* Background faint stars */}
+      <div style={{ position: "absolute", top: "5%", left: "5%", fontSize: 400, color: "var(--red)", opacity: 0.03, pointerEvents: "none", zIndex: 0 }}>★</div>
+      <div style={{ position: "absolute", bottom: "10%", right: "20%", fontSize: 300, color: "var(--green)", opacity: 0.03, pointerEvents: "none", zIndex: 0 }}>★</div>
+      <div style={{ position: "absolute", bottom: "-5%", left: "30%", fontSize: 200, color: "var(--red)", opacity: 0.02, pointerEvents: "none", zIndex: 0 }}>★</div>
+
+      <div style={{ padding: "24px 48px", display: "flex", justifyContent: "space-between", alignItems: "center", zIndex: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ width: 44, height: 44, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}>🫕</div>
+          <div>
+            <div style={{ fontFamily: "'Playfair Display',serif", fontSize: 24, fontWeight: 700, color: "var(--text-main)", letterSpacing: "0.02em" }}>ATLAS KITCHEN</div>
+            <div style={{ fontSize: 11, color: "var(--red)", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>MOROCCAN CULINARY AI</div>
+          </div>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <button style={{ width: 40, height: 40, background: "var(--red)", borderRadius: 8, border: "none", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 4px 12px rgba(201, 64, 64, 0.2)" }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+          </button>
+          <button onClick={onStartCooking} style={{ padding: "10px 24px", background: "var(--red)", color: "#fff", border: "none", borderRadius: 30, fontSize: 14, fontWeight: 600, cursor: "pointer", transition: "all 0.2s", boxShadow: "0 4px 12px rgba(201, 64, 64, 0.2)" }} onMouseEnter={e => { e.currentTarget.style.background = "#a33434"; }} onMouseLeave={e => { e.currentTarget.style.background = "var(--red)"; }}>
+            Get Started
+          </button>
+        </div>
+      </div>
+
+      <div style={{ display: "flex", flex: 1, padding: "48px 48px 80px", alignItems: "center", gap: 64, maxWidth: 1400, margin: "0 auto", width: "100%", zIndex: 1, flexWrap: "wrap" }}>
+        <div style={{ flex: "1 1 400px", minWidth: 300 }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(201, 64, 64, 0.08)", border: "1px solid rgba(201, 64, 64, 0.15)", padding: "6px 16px", borderRadius: 20, marginBottom: 32 }}>
+            <span style={{ fontSize: 14 }}>🇲🇦</span>
+            <span style={{ fontSize: 13, color: "var(--red)", fontWeight: 600 }}>Made with ❤️ in Morocco</span>
+          </div>
+          <h1 style={{ fontFamily: "'Playfair Display',serif", fontSize: 64, fontWeight: 700, lineHeight: 1.1, color: "var(--text-main)", marginBottom: 24 }}>
+            Discover the<br />
+            <span style={{ color: "var(--red)" }}>Magic of </span>
+            <span style={{ color: "var(--green)" }}>Moroccan</span><br />
+            Cuisine
+          </h1>
+          <p style={{ fontSize: 18, color: "var(--text-muted)", lineHeight: 1.6, marginBottom: 40, maxWidth: 500 }}>
+            Your personal AI culinary assistant, steeped in centuries of Moroccan tradition. From aromatic tagines to fluffy couscous — let technology meet tradition.
+          </p>
+          <div style={{ display: "flex", gap: 16 }}>
+            <button onClick={onStartCooking} style={{ padding: "16px 32px", background: "var(--red)", color: "#fff", border: "none", borderRadius: 30, fontSize: 16, fontWeight: 600, cursor: "pointer", boxShadow: "0 8px 24px rgba(201, 64, 64, 0.25)", transition: "all 0.2s" }} onMouseEnter={e => e.currentTarget.style.background = "#a33434"} onMouseLeave={e => e.currentTarget.style.background = "var(--red)"}>
+              Start Cooking →
+            </button>
+            <button onClick={onCreateAccount} style={{ padding: "16px 32px", background: "transparent", color: "var(--green)", border: "2px solid var(--green)", borderRadius: 30, fontSize: 16, fontWeight: 600, cursor: "pointer", transition: "all 0.2s" }} onMouseEnter={e => { e.currentTarget.style.background = "var(--green)"; e.currentTarget.style.color = "#fff"; }} onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--green)"; }}>
+              Create Account
+            </button>
+          </div>
+        </div>
+        <div style={{ flex: "1 1 500px", position: "relative", height: 600, minWidth: 300 }}>
+          <img src="https://images.unsplash.com/photo-1541518763669-27fef04b14ea?auto=format&fit=crop&q=80&w=600" style={{ position: "absolute", top: 20, right: 0, width: 440, height: 440, objectFit: "cover", borderRadius: 24, boxShadow: "0 20px 40px rgba(0,0,0,0.15)", zIndex: 1, animation: "floatSlow 6s ease-in-out infinite", border: "8px solid #fff" }} alt="Tagine" />
+
+          {/* Floating Star badge */}
+          <div style={{ position: "absolute", top: 0, right: -20, width: 70, height: 70, borderRadius: "50%", background: "linear-gradient(135deg, rgba(201, 64, 64, 0.85) 0%, rgba(61, 138, 74, 0.85) 100%)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 4, color: "#fff", boxShadow: "0 10px 20px rgba(0,0,0,0.2)", animation: "floatFast 4s ease-in-out infinite" }}>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+          </div>
+
+          <img src="https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&q=80&w=400" style={{ position: "absolute", bottom: -20, left: 20, width: 280, height: 280, objectFit: "cover", borderRadius: 24, border: "8px solid #fff", boxShadow: "0 20px 40px rgba(0,0,0,0.15)", zIndex: 2, animation: "floatMedium 5s ease-in-out infinite" }} alt="Couscous" />
+          <img src="https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&q=80&w=300" style={{ position: "absolute", bottom: 40, right: -40, width: 200, height: 200, objectFit: "cover", borderRadius: 24, border: "8px solid #fff", boxShadow: "0 20px 40px rgba(0,0,0,0.15)", zIndex: 3, animation: "floatFast 4.5s ease-in-out infinite" }} alt="Pastilla" />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function KitchenApp() {
   injectTheme();
@@ -694,6 +775,8 @@ export default function KitchenApp() {
   const [showPrefs, setShowPrefs] = useState(false);
   const [prefs, setPrefs] = useState({ liked: [], disliked: [], dietary: [], flavor_notes: "" });
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [showAuth, setShowAuth] = useState(false);
+  const [authMode, setAuthMode] = useState("login");
 
   const bottomRef = useRef(null);
   const taRef = useRef(null);
@@ -761,7 +844,7 @@ export default function KitchenApp() {
     } catch (err) {
       console.error("Failed to delete session from backend:", err);
     }
-    
+
     // Safely update state without nesting setters
     const nextSessions = sessions.filter(s => s.session_id !== id);
 
@@ -774,7 +857,7 @@ export default function KitchenApp() {
         setSessions([sess]);
         setActiveSession(newId);
         setMessages(prev => ({ ...prev, [id]: undefined, [newId]: [] }));
-        return; 
+        return;
       }
     }
 
@@ -865,7 +948,19 @@ export default function KitchenApp() {
     setMessages({});
   };
 
-  if (!user) return <AuthScreen onAuth={handleAuth} />;
+  if (!user) {
+    if (showAuth) {
+      return (
+        <div style={{ position: "relative" }}>
+          <button onClick={() => setShowAuth(false)} style={{ position: "absolute", top: 24, left: 24, padding: "10px 16px", borderRadius: 20, border: "1px solid var(--border)", background: "#fff", cursor: "pointer", zIndex: 100, display: "flex", alignItems: "center", gap: 8, fontSize: 14, fontWeight: 600 }}>
+            <span style={{ display: "flex", transform: "rotate(90deg)" }}><IcChevron /></span> Back
+          </button>
+          <AuthScreen onAuth={handleAuth} initialMode={authMode} />
+        </div>
+      );
+    }
+    return <LandingPage onStartCooking={() => { setAuthMode("login"); setShowAuth(true); }} onCreateAccount={() => { setAuthMode("register"); setShowAuth(true); }} />;
+  }
 
   const currentMsgs = messages[activeSession] || [];
 
@@ -886,7 +981,7 @@ export default function KitchenApp() {
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 28 }}>
               <span style={{ fontSize: 24 }}>🫕</span>
               <div>
-                <div style={{ fontFamily: "'Playfair Display',serif", fontSize: 20, color: "var(--text-light)", letterSpacing: "0.02em", fontWeight: 600 }}>Kitchen AI</div>
+                <div style={{ fontFamily: "'Playfair Display',serif", fontSize: 20, color: "var(--text-light)", letterSpacing: "0.02em", fontWeight: 600 }}>ATLAS KITCHEN</div>
                 <div style={{ fontSize: 10, color: "var(--accent)", fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase" }}>MOROCCAN & BEYOND</div>
               </div>
             </div>
@@ -1001,22 +1096,35 @@ export default function KitchenApp() {
         {/* Messages */}
         <div style={{ flex: 1, overflowY: "auto", padding: "32px 32px 16px" }}>
           {currentMsgs.length === 0 ? (
-            <div className="fade-up" style={{ textAlign: "center", paddingTop: 80, maxWidth: 600, margin: "0 auto" }}>
-              <div style={{ fontSize: 64, marginBottom: 24 }}>🧑‍🍳</div>
-              <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: 36, color: "var(--text-main)", fontWeight: 600, marginBottom: 16 }}>
+            <div className="fade-up" style={{ textAlign: "center", paddingTop: 60, maxWidth: 800, margin: "0 auto", position: "relative" }}>
+              {/* Star faint background element */}
+              <div style={{ position: "absolute", top: "10%", left: "-10%", fontSize: 300, color: "var(--accent)", opacity: 0.03, pointerEvents: "none", zIndex: 0 }}>★</div>
+              <div style={{ position: "absolute", top: "50%", right: "-10%", fontSize: 200, color: "var(--green)", opacity: 0.03, pointerEvents: "none", zIndex: 0 }}>★</div>
+
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(200, 104, 50, 0.08)", padding: "6px 16px", borderRadius: 20, marginBottom: 24, position: "relative", zIndex: 1 }}>
+                <span style={{ fontSize: 14 }}>🇲🇦</span>
+                <span style={{ fontSize: 12, color: "var(--accent)", fontWeight: 700, letterSpacing: "0.05em" }}>ATLAS KITCHEN</span>
+              </div>
+              <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: 36, color: "var(--text-main)", fontWeight: 600, marginBottom: 16, position: "relative", zIndex: 1 }}>
                 What shall we create today?
               </h2>
-              <p style={{ color: "var(--text-muted)", marginBottom: 40, fontSize: 15, lineHeight: 1.6 }}>
+              <p style={{ color: "var(--text-muted)", marginBottom: 40, fontSize: 15, lineHeight: 1.6, maxWidth: 600, margin: "0 auto 40px", position: "relative", zIndex: 1 }}>
                 Discover the rich flavors of Morocco. Ask for a traditional recipe, ingredient substitutions, or let me adapt your favorite dishes with a Moroccan twist.
               </p>
-              <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 10 }}>
-                {SUGGESTIONS.map((sug, i) => (
-                  <button key={i} onClick={() => sendMessage(sug)} style={{
-                    padding: "10px 18px", borderRadius: 20, background: "#fff", border: "1px solid var(--border-strong)",
-                    color: "var(--text-main)", cursor: "pointer", fontSize: 14, transition: "all 0.2s",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.02)"
-                  }} onMouseEnter={e => e.currentTarget.style.borderColor = "var(--accent)"} onMouseLeave={e => e.currentTarget.style.borderColor = "var(--border-strong)"}>
-                    {sug}
+              <div style={{ display: "flex", justifyContent: "center", gap: 16, position: "relative", zIndex: 1 }}>
+                {IMAGE_SUGGESTIONS.map((sug, i) => (
+                  <button key={i} onClick={() => sendMessage(sug.title)} style={{
+                    width: 220, padding: 0, borderRadius: 16, background: "#fff", border: "1px solid var(--border-strong)",
+                    cursor: "pointer", transition: "all 0.2s", overflow: "hidden", display: "flex", flexDirection: "column",
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.04)"
+                  }} onMouseEnter={e => e.currentTarget.style.transform = "translateY(-4px)"} onMouseLeave={e => e.currentTarget.style.transform = "none"}>
+                    <div style={{ height: 130, width: "100%", position: "relative" }}>
+                      <img src={sug.img} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt={sug.title} />
+                      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 4, background: i === 0 ? "var(--red)" : i === 1 ? "var(--green)" : "var(--accent)" }} />
+                    </div>
+                    <div style={{ padding: "16px", fontWeight: 600, fontSize: 14, color: "var(--text-main)", textAlign: "center" }}>
+                      {sug.title}
+                    </div>
                   </button>
                 ))}
               </div>
@@ -1047,7 +1155,7 @@ export default function KitchenApp() {
               rows={1}
               style={{
                 flex: 1, background: "transparent", border: "none", outline: "none",
-                resize: "none", color: "var(--text-main)", fontSize: 15, lineHeight: 1.6,
+                resize: "none", color: "var(--text-main)", fontSize: 15, lineHeight: 1.5,
                 maxHeight: 120, overflow: "auto", fontFamily: "inherit"
               }}
             />
@@ -1076,9 +1184,6 @@ export default function KitchenApp() {
               </button>
             </div>
           </div>
-          <p style={{ fontSize: 12, color: "var(--text-hint)", textAlign: "center", marginTop: 12, fontWeight: 500 }}>
-            Enter to send · Shift+Enter for new line
-          </p>
         </div>
 
       </div>

@@ -152,8 +152,8 @@ You have:
   - Style chosen        : {style}   (classic | moroccan_twist | moroccan)
 
 If 'Full recipe' is 'none', your ONLY task is to gracefully present the 'Recommended recipes' to the user, highlighting why they match their preferences, and invite them to choose one.
-Otherwise, write the final answer. Include a warm, engaging introduction to the dish immediately after the dish name. Include the recipe with steps, nutritional info,
-and personalised notes. Do NOT output a "critic score" layout.
+Otherwise, write the final answer. Include a warm, engaging introduction to the dish immediately after the dish name. Include the recipe with steps
+and personalised notes. Do NOT include nutritional info in the text (it will be displayed natively). Do NOT output a "critic score" layout.
 
 PRICING RULES (CRITICAL — follow exactly):
 - The recipe JSON contains pre-computed pricing data: each ingredient may have a "calculated_price" field.

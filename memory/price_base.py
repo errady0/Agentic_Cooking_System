@@ -14,7 +14,7 @@ ingredients_price = {
     "squid":            {"price_mad": 50,   "unit": "kg",     "notes": ""},
     "anchovies":        {"price_mad": 25,   "unit": "kg",     "notes": ""},
     "shrimp":           {"price_mad": 85,   "unit": "kg",     "notes": "fresh, coastal markets; avg of two sources"},
-    "egg":              {"price_mad": 1.25, "unit": "unit",   "notes": "≈15 MAD/dozen"},
+    "egg":              {"price_mad": 1, "unit": "unit",   "notes": "≈15 MAD/dozen"},
     # ── Legumes ───────────────────────────────────────────────────────
     "chickpeas":        {"price_mad": 12,   "unit": "kg",     "notes": "dried; avg of two sources"},
     "lentils":          {"price_mad": 9,    "unit": "kg",     "notes": "dried, red or green; avg of two sources"},
@@ -36,6 +36,7 @@ ingredients_price = {
     "tomato":           {"price_mad": 7,    "unit": "kg",     "notes": "seasonal average; avg of two sources"},
     "onion":            {"price_mad": 8,    "unit": "kg",     "notes": "avg of two sources"},
     "garlic":           {"price_mad": 17.5, "unit": "kg",     "notes": "local; avg of two sources"},
+    "garlic cloves":    {"price_mad": 0.5,  "unit": "clove",  "notes": ""},
     "potato":           {"price_mad": 6.75, "unit": "kg",     "notes": "local variety; avg of two sources"},
     "carrot":           {"price_mad": 5.5,  "unit": "kg",     "notes": "avg of two sources"},
     "zucchini":         {"price_mad": 6.5,  "unit": "kg",     "notes": "courgette; avg of two sources"},
