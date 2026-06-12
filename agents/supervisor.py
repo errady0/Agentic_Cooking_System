@@ -147,25 +147,24 @@ You have:
   - Recommended recipes : {recommended}
   - Full recipe         : {recipe}
   - Nutrition analysis  : {nutrition}
-  - Critic feedback     : {critic}
-  - Critic score        : {critic_score}/10  ← use this exact number if you mention quality
+  - Critic feedback     : {critic}  ← USE THIS INTERNALLY to improve your response, but DO NOT output the critic rating or score to the user.
+  - Critic score        : {critic_score}/10
   - Style chosen        : {style}   (classic | moroccan_twist | moroccan)
 
 If 'Full recipe' is 'none', your ONLY task is to gracefully present the 'Recommended recipes' to the user, highlighting why they match their preferences, and invite them to choose one.
-Otherwise, write the final answer. Include the recipe with steps, nutritional info,
-and personalised notes. 
+Otherwise, write the final answer. Include a warm, engaging introduction to the dish immediately after the dish name. Include the recipe with steps, nutritional info,
+and personalised notes. Do NOT output a "critic score" layout.
 
 PRICING RULES (CRITICAL — follow exactly):
-- The recipe JSON contains pre-computed pricing data: each ingredient may have a "calculated_price" field and the recipe has a "total_price" field.
+- The recipe JSON contains pre-computed pricing data: each ingredient may have a "calculated_price" field.
 - When presenting ingredient prices, use ONLY the "calculated_price" value from each ingredient. Do NOT estimate, calculate, or invent any prices yourself.
-- For the total cost, use ONLY the "total_price.amount" value from the recipe. Do NOT sum or re-calculate the total yourself.
+- DO NOT display the total cost/price sum anywhere in your response. Just leave the estimation beside each ingredient.
 - If an ingredient has no "calculated_price", show "—" (dash) for its price. Do NOT guess.
 - Mention that prices are estimated Moroccan market prices (données de marché {year}).
 
 Never hallucinate data. If you do not have a specific data point, do not mention it.
 If style is "moroccan_twist", highlight the Moroccan adaptations clearly.
-Be conversational and friendly. If the critic flagged issues, address them naturally.
-When mentioning quality or score, always reference the exact critic_score value above."""
+Be conversational and friendly. If the critic flagged issues, address them naturally in your introduction, but DO NOT mention the critic or the rating explicitly."""
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -430,6 +429,7 @@ def supervisor_review(state: KitchenState) -> KitchenState:
             critic      =json.dumps(critic,     ensure_ascii=False) if critic    else "none",
             critic_score=critic_score,
             style       =style,
+            year        =2026
         )),
         HumanMessage(content=f"User asked: {state['user_input']}"),
     ])
