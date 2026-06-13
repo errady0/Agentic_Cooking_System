@@ -144,6 +144,14 @@ const theme = `
     background: var(--border-strong);
     margin: 1.5em 0;
   }
+
+  .session-item .delete-btn {
+    opacity: 0;
+  }
+  .session-item:hover .delete-btn,
+  .session-item.active .delete-btn {
+    opacity: 1 !important;
+  }
 `;
 
 function injectTheme() {
@@ -1420,6 +1428,7 @@ export default function KitchenApp() {
               const cleanTitle = sess.title.replace(/^[\p{Emoji}]\s*/u, "");
               return (
                 <div key={sess.session_id} onClick={() => setActiveSession(sess.session_id)}
+                  className={`session-item ${isActive ? 'active' : ''}`}
                   style={{
                     display: "flex", alignItems: "center", gap: 10, padding: "10px 12px",
                     borderRadius: 8, marginBottom: 4, cursor: "pointer", transition: "all .2s cubic-bezier(0.16, 1, 0.3, 1)",
@@ -1436,10 +1445,10 @@ export default function KitchenApp() {
                   }}>
                     {cleanTitle}
                   </span>
-                  <button onClick={e => deleteSession(sess.session_id, e)} style={{
+                  <button onClick={e => deleteSession(sess.session_id, e)} className="delete-btn" style={{
                     background: "transparent", border: "none", cursor: "pointer",
                     color: "var(--red)", padding: 4, borderRadius: 6, display: "flex",
-                    opacity: isActive ? 1 : 0, transition: "opacity .2s",
+                    transition: "opacity .2s",
                   }}>
                     <IcTrash />
                   </button>

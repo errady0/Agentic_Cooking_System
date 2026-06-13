@@ -35,8 +35,7 @@ ingredients_price = {
     # ── Vegetables ───────────────────────────────────────────────────
     "tomato":           {"price_mad": 7,    "unit": "kg",     "notes": "seasonal average; avg of two sources"},
     "onion":            {"price_mad": 8,    "unit": "kg",     "notes": "avg of two sources"},
-    "garlic":           {"price_mad": 17.5, "unit": "kg",     "notes": "local; avg of two sources"},
-    "garlic cloves":    {"price_mad": 0.5,  "unit": "clove",  "notes": ""},
+    "garlic":           {"price_mad": "<1", "unit": "clove",  "notes": ""},
     "potato":           {"price_mad": 6.75, "unit": "kg",     "notes": "local variety; avg of two sources"},
     "carrot":           {"price_mad": 5.5,  "unit": "kg",     "notes": "avg of two sources"},
     "zucchini":         {"price_mad": 6.5,  "unit": "kg",     "notes": "courgette; avg of two sources"},
@@ -84,7 +83,7 @@ ingredients_price = {
     "dried apricot":    {"price_mad": 15,   "unit": "kg",     "notes": ""},
     # ── Spices ───────────────────────────────────────────────────────
     "cumin":            {"price_mad": 55,   "unit": "kg",     "notes": "whole or ground; avg of two sources"},
-    "cinnamon":         {"price_mad": 65,   "unit": "kg",     "notes": "sticks or ground; avg of two sources"},
+    "cinnamon":         {"price_mad": "<1", "unit": "stick",  "notes": "sticks or ground; avg of two sources"},
     "ginger":           {"price_mad": 35,   "unit": "kg",     "notes": "ground; avg of two sources"},
     "turmeric":         {"price_mad": 52.5, "unit": "kg",     "notes": "avg of two sources"},
     "paprika":          {"price_mad": 42.5, "unit": "kg",     "notes": "sweet red; avg of two sources"},

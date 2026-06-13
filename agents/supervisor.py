@@ -33,6 +33,8 @@ _llm = get_llm()
 _SYSTEM_CLASSIFY = """You are the intent classifier for a Moroccan kitchen AI assistant.
 Classify the user message into exactly one intent. Reply ONLY with valid JSON, no markdown.
 
+User's Liked Dishes from preferences: {liked}
+
 INTENTS:
 - culinary              → wants a Moroccan recipe, recommendation, or cooking help
 - non_moroccan_culinary → wants a recipe/cooking help for a dish that is clearly NOT Moroccan
@@ -50,6 +52,12 @@ MEAL PLANNING rules — apply FIRST, before any other rule:
   → ALWAYS culinary (need_recommendation: true), never out_of_scope.
 - In the context of a kitchen assistant, an unqualified "plan" means a MEAL plan.
 
+FAVORITE/LIKED DISH rules:
+- If the user explicitly asks to cook, make, or suggest their "liked", "favorite", or "preferred" dish:
+- If there is EXACTLY ONE liked dish listed above, set need_recipe to true, need_recommendation to false, and set dish_hint to that exact dish.
+- If there is MORE THAN ONE liked dish listed above, set need_recommendation to true, need_recipe to false, and set objective to "Suggest user's liked dishes".
+- If there are NO liked dishes, set need_recommendation to true and let the system suggest normally.
+
 IMPORTANT chitchat rules:
 - If the user shares personal information (name, age, where they live, how they feel),
   that is ALWAYS chitchat, never out_of_scope.
@@ -57,7 +65,7 @@ IMPORTANT chitchat rules:
 - Small talk that references food culturally but asks no cooking question is chitchat.
 
 OUTPUT format:
-{
+{{
   "intent"              : "culinary" | "non_moroccan_culinary" | "culinary_info" | "chitchat" | "out_of_scope",
   "objective"           : "<10 words max>",
   "dish_hint"           : "<dish name if mentioned, else empty string>",
@@ -65,8 +73,7 @@ OUTPUT format:
   "need_recommendation" : true | false,
   "need_recipe"         : true | false,
   "need_nutrition"      : true | false,
-  "personal_facts"      : { }   // any personal facts the user revealed (e.g. {"name": "Ahmed"})
-}
+}}
 
 RULES:
 - If the user asks a personal question, classify it as chitchat.
@@ -197,8 +204,11 @@ def supervisor_classify(state: KitchenState) -> KitchenState:
     if state.get("user_style_choice") in ("classic", "moroccan_twist"):
         return {}
 
+    prefs = state.get("user_preferences", {})
+    liked = ", ".join(prefs.get("liked", [])) or "none"
+
     resp = _llm.invoke([
-        SystemMessage(content=_SYSTEM_CLASSIFY),
+        SystemMessage(content=_SYSTEM_CLASSIFY.format(liked=liked)),
         HumanMessage(content=state["user_input"]),
     ])
 

@@ -32,6 +32,8 @@ It should quietly shape and color your recommendations, not dominate them. Concr
   Dietary constraints: {dietary}
   Flavor notes: {flavor_notes}
 
+SPECIAL RULE: If the objective is exactly "Suggest user's liked dishes", you MUST suggest EXACTLY the dishes listed in "Liked dishes", ignoring the "quietly shape" rule.
+
 Additional context from web search: {web_context}
 
 Reply with a JSON array (no markdown) where each item has:
