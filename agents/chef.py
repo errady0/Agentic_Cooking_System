@@ -209,6 +209,11 @@ def chef_agent(state: KitchenState) -> KitchenState:
     try:
         ingredients_list = recipe.get("ingredients", [])
 
+        # Normalize ingredients_list to ensure all items are dicts
+        for idx, ing in enumerate(ingredients_list):
+            if isinstance(ing, str):
+                ingredients_list[idx] = {"item": ing, "quantity": ""}
+
         # Build a map: original_name → english_name for matching
         original_names = [
             ing.get("item", ing.get("name", ""))
