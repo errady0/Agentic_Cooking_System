@@ -239,11 +239,6 @@ function AuthScreen({ onAuth, initialMode = "login" }) {
       <div style={{ position: "absolute", bottom: "10%", right: "10%", fontSize: 240, color: "var(--green)", opacity: 0.02, pointerEvents: "none", zIndex: 0 }}>★</div>
 
       <div className="card fade-up" style={{ width: 420, padding: "44px 40px", borderRadius: 24, position: "relative", zIndex: 1, background: "#fff", boxShadow: "0 8px 32px rgba(0,0,0,0.06)" }}>
-        {/* Back arrow */}
-        <button style={{ position: "absolute", top: 24, left: 24, background: "transparent", border: "1px solid var(--border)", borderRadius: "50%", width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "var(--text-muted)", transition: "all 0.2s" }} onMouseEnter={e => e.currentTarget.style.background = "var(--surface-hover)"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-          <span style={{ fontSize: 18 }}>←</span>
-        </button>
-
         <div style={{ textAlign: "center", marginBottom: 32, marginTop: 12 }}>
           <div style={{ width: 72, height: 72, margin: "0 auto 16px", borderRadius: "50%", overflow: "hidden", border: "3px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg)" }}>
             <img src="/moroccan_tagine.png" alt="Atlas Kitchen" style={{ width: "120%", height: "120%", objectFit: "cover" }} />

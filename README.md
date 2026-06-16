@@ -141,7 +141,8 @@ Cooking_System/
 git clone <repo-url> Cooking_System
 cd Cooking_System
 
-python3 -m venv venv               # Create virtual environment (python 3.12 is recommended)
+python3 -m venv venv               # Create virtual environment (python 3.12 is 00recommended)
+# python -m venv venv              (windows)
 source venv/bin/activate           # Linux / macOS
 # .\venv\Scripts\activate.bat      # Windows cmd
 # .\.venv\Scripts\Activate.ps1     # Windows PowerShell
@@ -233,6 +234,8 @@ The FastAPI backend exposes the following REST endpoints (all JSON):
 | `POST` | `/api/chat` | Send a message `{user_id, session_id, message}` → full pipeline result |
 | `GET` | `/api/preferences/{user_id}` | Fetch stored preferences |
 | `POST` | `/api/preferences` | Update preferences `{user_id, liked, disliked, dietary, flavor_notes}` |
+| `GET` | `/api/sessions/{user_id}` | Get session history |
+| `DELETE` | `/api/sessions/{user_id}/{session_id}` | Delete session |
 
 ### Chat response shape
 
@@ -259,13 +262,12 @@ When `waiting: true`, the assistant is asking the user to choose between Classic
 
 The React frontend (`frontend/src/KitchenApp.jsx`) includes:
 
+- **Landing Page** — describe the app and what it does, with login & register buttons
 - **Authentication** — register / login with hashed passwords, session-scoped chat
 - **Multi-session sidebar** — create, switch, and delete chat sessions
-- **Glassmorphism dark UI** — warm Moroccan amber palette, DM Serif Display + Outfit fonts
 - **Markdown rendering** — full GFM support (tables, lists, code, blockquotes)
-- **Recipe card** (collapsible) — cultural note, Moroccan adaptations, ingredients with live MAD prices, total estimated cost, numbered cooking steps with timers, chef tips, suggested pairing
+- **Recipe card** (collapsible) — cultural note, Moroccan adaptations, ingredients, numbered cooking steps with timers, chef tips, suggested pairing
 - **Nutrition pill badges** — calories, carbs, protein, fat, fibre, Mediterranean diet score
-- **Quality score badge** — critic score (1–10) with colour coding (green ≥ 7, amber 5–6, red < 5)
 - **Suggested recipe chips** — clickable recommendation cards
 - **Style choice buttons** — Classic vs Moroccan Twist inline in the chat bubble
 - **Dietary profile panel** — toggle dietary tags, set liked/disliked dishes and flavor notes
@@ -290,11 +292,16 @@ The system works without Tavily — web search and live prices are simply disabl
 **Python (backend + agents):**
 ```
 langgraph>=1.2.0
+langgraph-checkpoint-sqlite>=3.1.0
 langchain>=1.3.0
 langchain-anthropic>=1.4.0
 langchain-openai>=0.1.0
 langchain_groq>=1.1.2
 langchain-community>=0.4.0
+psycopg2-binary>=2.9
+pymysql>=1.2.0
+sqlalchemy>=2.0
+alembic>=1.13
 beautifulsoup4>=4.12
 requests>=2.31
 python-dotenv>=1.0
@@ -302,8 +309,10 @@ rich>=13.0
 tavily-python>=0.3
 fastapi>=0.136.3
 uvicorn>=0.48.0
+python-jose>=3.5.0
+passlib>=1.7.4
 bcrypt>=5.0.0
-psycopg2-binary>=2.9   # optional — only needed for PostgreSQL
+
 ```
 
 **JavaScript (frontend):**
