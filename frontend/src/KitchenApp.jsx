@@ -888,7 +888,7 @@ function LandingPage({ onStartCooking, onCreateAccount }) {
             Your personal AI culinary assistant, steeped in centuries of Moroccan tradition. From aromatic tagines to fluffy couscous — let technology meet tradition.
           </p>
           <p style={{ fontSize: 15, color: "var(--text-hint)", lineHeight: 1.6, marginBottom: 36, maxWidth: 520, fontStyle: "italic" }}>
-            6 AI agents working together — recipes, nutrition, pricing, and quality review, all in one conversation.
+            5 AI agents working together — recipes, nutrition, pricing, and quality review, all in one conversation.
           </p>
           <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
             <button onClick={onStartCooking} style={{ padding: "16px 36px", background: "var(--red)", color: "#fff", border: "none", borderRadius: 30, fontSize: 16, fontWeight: 600, cursor: "pointer", boxShadow: "0 8px 28px rgba(193,18,31,0.25)", transition: "all 0.3s" }}
@@ -927,7 +927,7 @@ function LandingPage({ onStartCooking, onCreateAccount }) {
       <section id="capabilities" className="landing-section" style={{ padding: "100px 48px", maxWidth: 1200, margin: "0 auto" }}>
         <div style={{ textAlign: "center", marginBottom: 64, position: "relative" }}>
           <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "var(--accent-light)", padding: "6px 18px", borderRadius: 20, marginBottom: 20 }}>
-            <span style={{ fontSize: 12, color: "var(--accent)", fontWeight: 700, letterSpacing: "0.06em" }}>POWERED BY 6 AI AGENTS</span>
+            <span style={{ fontSize: 12, color: "var(--accent)", fontWeight: 700, letterSpacing: "0.06em" }}>POWERED BY 5 AI AGENTS</span>
           </div>
           <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: "clamp(32px, 4vw, 48px)", fontWeight: 700, color: "var(--text-main)", marginBottom: 16 }}>
             What Can <span style={{ color: "var(--red)" }}>Atlas Kitchen</span> Do?
@@ -975,7 +975,7 @@ function LandingPage({ onStartCooking, onCreateAccount }) {
               How It <span style={{ color: "var(--green)" }}>Works</span>
             </h2>
             <p style={{ fontSize: 17, color: "var(--text-muted)", maxWidth: 600, margin: "0 auto", lineHeight: 1.7 }}>
-              Behind every recipe, 6 specialized AI agents collaborate to deliver a perfect result — automatically.
+              Behind every recipe, 5 specialized AI agents collaborate to deliver a perfect result — automatically.
             </p>
             <a href="#" style={{ position: "absolute", top: 0, right: 0, display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 20, border: "1px solid var(--border)", textDecoration: "none", color: "var(--text-muted)", fontSize: 14, fontWeight: 600, transition: "all 0.2s" }} onMouseEnter={e => e.currentTarget.style.background = "#fff"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>↑ Back</a>
           </div>
@@ -1013,7 +1013,7 @@ function LandingPage({ onStartCooking, onCreateAccount }) {
             textAlign: "center"
           }}>
             <p style={{ fontSize: 14, color: "var(--text-muted)", lineHeight: 1.7, margin: 0 }}>
-              <span style={{ color: "var(--accent)", fontWeight: 700 }}>⭐ Quality Guarantee</span> — Our AI critic reviews every recipe and may refine it up to <strong>3 times</strong> before serving it to you, ensuring accuracy, taste, and cultural authenticity.
+              <span style={{ color: "var(--accent)", fontWeight: 700 }}>⭐ Quality Guarantee</span> — Our AI critic reviews every recipe before serving it to you, ensuring accuracy, taste, and cultural authenticity.
             </p>
           </div>
         </div>
